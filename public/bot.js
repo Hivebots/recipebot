@@ -7681,6 +7681,7 @@ var chooseRecipe = function (input, args) {
         ].concat(recipe.recipeIngredient, [
             "Let me know when you're ready to go."
         ]))
+            .zip(rxjs_1.Observable.timer(0, 1000), function (x) { return x; }) // Right now we're having trouble introducing delays
             .do(function (ingredient) { return input.reply(ingredient); })
             .count();
     }

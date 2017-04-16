@@ -168,7 +168,7 @@ const chooseRecipe = (input: RecipeBotInput, args: REArgs) => {
             ... recipe.recipeIngredient,
             "Let me know when you're ready to go."
         ])
-        // .zip(Observable.timer(0, 1000), x => x) // Right now we're having trouble introducing delays
+        .zip(Observable.timer(0, 1000), x => x) // Right now we're having trouble introducing delays
         .do(ingredient => input.reply(ingredient))
         .count();
     } else {
