@@ -133,30 +133,23 @@ const reply = (text: string): Handler<IChatSession> => (session) => session.repl
 
 // Prompts
 
-import { ChoiceLists, PromptRulesMaker, Prompt } from 'prague';
-
-const recipeChoiceLists: ChoiceLists = {
-    'Cheeses': ['Cheddar', 'Wensleydale', 'Brie', 'Velveeta']
-}
-
-const recipePromptRules: PromptRulesMaker<RecipeBotSession> = prompt => ({
-    'Favorite_Color': prompt.text((session, args) =>
-        session.reply(args['text'] === "blue" ? "That is correct!" : "That is incorrect"),
-    ),
-    'Favorite_Cheese': prompt.choice('Cheeses', (session, args) =>
-        session.reply(args['choice'] === "Velveeta" ? "Ima let you finish but FYI that is not really cheese." : "Interesting.")
-    ),
-    'Like_Cheese': prompt.confirm((session, args) =>
-        session.reply(args['confirm'] ? "That is correct." : "That is incorrect.")
-    ),
-});
+import { Prompt } from 'prague';
 
 const prompt = new Prompt<RecipeBotSession>(
-    recipeChoiceLists,
-    recipePromptRules,
     (session) => session.data.userInConversation.promptKey,
     (session, promptKey) => session.store.dispatch<RecipeAction>({ type: 'Set_PromptKey', promptKey })
 );
+
+const cheeses = ['Cheddar', 'Wensleydale', 'Brie', 'Velveeta'];
+
+prompt.text('Favorite_Color', "What is your favorite color?", (session, args: string) =>
+    session.reply(args === "blue" ? "That is correct!" : "That is incorrect"));
+
+prompt.choice('Favorite_Cheese', "What is your favorite cheese?", cheeses, (session, args: string) =>
+    session.reply(args === "Velveeta" ? "Ima let you finish but FYI that is not really cheese." : "Interesting."));
+
+prompt.confirm('Like_Cheese', "Do you like cheese?", (session, args: boolean) =>
+    session.reply(args ? "That is correct." : "That is incorrect."));
 
 // Intents
 
@@ -264,9 +257,9 @@ const recipeRule = firstMatch(
 
     // For testing Prompts
     filter(queries.always, firstMatch(
-        re.rule(intents.askQuestion, (session) => prompt.textCreate(session, 'Favorite_Color', "What is your favorite color?")),
-        re.rule(intents.askYorNQuestion, (session) => prompt.confirmCreate(session, 'Like_Cheese', "Do you like cheese?")),
-        re.rule(intents.askChoiceQuestion, (session) => prompt.choiceCreate(session, 'Favorite_Cheese', 'Cheeses', "What is your favorite cheese?"))
+        re.rule(intents.askQuestion, prompt.reply('Favorite_Color')),
+        re.rule(intents.askYorNQuestion, prompt.reply('Like_Cheese')),
+        re.rule(intents.askChoiceQuestion, prompt.reply('Favorite_Cheese'))
     )),
 
     // For testing LUIS

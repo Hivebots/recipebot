@@ -7656,21 +7656,17 @@ var prague_3 = __webpack_require__(10);
 var reply = function (text) { return function (session) { return session.reply(text); }; };
 // Prompts
 var prague_4 = __webpack_require__(10);
-var recipeChoiceLists = {
-    'Cheeses': ['Cheddar', 'Wensleydale', 'Brie', 'Velveeta']
-};
-var recipePromptRules = function (prompt) { return ({
-    'Favorite_Color': prompt.text(function (session, args) {
-        return session.reply(args['text'] === "blue" ? "That is correct!" : "That is incorrect");
-    }),
-    'Favorite_Cheese': prompt.choice('Cheeses', function (session, args) {
-        return session.reply(args['choice'] === "Velveeta" ? "Ima let you finish but FYI that is not really cheese." : "Interesting.");
-    }),
-    'Like_Cheese': prompt.confirm(function (session, args) {
-        return session.reply(args['confirm'] ? "That is correct." : "That is incorrect.");
-    }),
-}); };
-var prompt = new prague_4.Prompt(recipeChoiceLists, recipePromptRules, function (session) { return session.data.userInConversation.promptKey; }, function (session, promptKey) { return session.store.dispatch({ type: 'Set_PromptKey', promptKey: promptKey }); });
+var prompt = new prague_4.Prompt(function (session) { return session.data.userInConversation.promptKey; }, function (session, promptKey) { return session.store.dispatch({ type: 'Set_PromptKey', promptKey: promptKey }); });
+var cheeses = ['Cheddar', 'Wensleydale', 'Brie', 'Velveeta'];
+prompt.text('Favorite_Color', "What is your favorite color?", function (session, args) {
+    return session.reply(args === "blue" ? "That is correct!" : "That is incorrect");
+});
+prompt.choice('Favorite_Cheese', "What is your favorite cheese?", cheeses, function (session, args) {
+    return session.reply(args === "Velveeta" ? "Ima let you finish but FYI that is not really cheese." : "Interesting.");
+});
+prompt.confirm('Like_Cheese', "Do you like cheese?", function (session, args) {
+    return session.reply(args ? "That is correct." : "That is incorrect.");
+});
 // Intents
 // Message handlers
 var chooseRecipe = function (session, args) {
@@ -7755,7 +7751,7 @@ var recipeRule = prague_3.firstMatch(
 // Prompts
 prompt.rule(), 
 // For testing Prompts
-prague_3.filter(queries.always, prague_3.firstMatch(re.rule(intents.askQuestion, function (session) { return prompt.textCreate(session, 'Favorite_Color', "What is your favorite color?"); }), re.rule(intents.askYorNQuestion, function (session) { return prompt.confirmCreate(session, 'Like_Cheese', "Do you like cheese?"); }), re.rule(intents.askChoiceQuestion, function (session) { return prompt.choiceCreate(session, 'Favorite_Cheese', 'Cheeses', "What is your favorite cheese?"); }))), 
+prague_3.filter(queries.always, prague_3.firstMatch(re.rule(intents.askQuestion, prompt.reply('Favorite_Color')), re.rule(intents.askYorNQuestion, prompt.reply('Like_Cheese')), re.rule(intents.askChoiceQuestion, prompt.reply('Favorite_Cheese')))), 
 // For testing LUIS
 prague_3.filter(queries.always, luis.rule('testModel', [
     luis.intent('singASong', function (session, args) { return session.reply("Let's sing " + args.song); }),
@@ -11082,89 +11078,88 @@ exports.LUIS = LUIS;
 Object.defineProperty(exports, "__esModule", { value: true });
 var Rules_1 = __webpack_require__(36);
 var Prompt = (function () {
-    function Prompt(choiceLists, promptRulesMaker, getPromptKey, setPromptKey) {
-        this.choiceLists = choiceLists;
-        this.promptRulesMaker = promptRulesMaker;
+    function Prompt(getPromptKey, setPromptKey) {
         this.getPromptKey = getPromptKey;
         this.setPromptKey = setPromptKey;
-        this.yorn = ['Yes', 'No'];
-        this.promptRules = promptRulesMaker(this);
+        this.prompts = {};
     }
+    Prompt.prototype.add = function (promptKey, promptStuff) {
+        if (this.prompts[promptKey]) {
+            console.warn("Prompt key " + promptKey + " already exists. Plese use a different key.");
+            return;
+        }
+        this.prompts[promptKey] = promptStuff;
+    };
     // Prompt Rule Creators
-    Prompt.prototype.text = function (handler) {
-        return {
-            recognizer: function (session) { return ({ text: session.text }); },
-            handler: handler
-        };
-    };
-    Prompt.prototype.choice = function (choiceName, handler) {
+    Prompt.prototype.text = function (promptKey, text, handler) {
         var _this = this;
-        return {
-            recognizer: function (session) {
-                var choice = _this.choiceLists[choiceName].find(function (choice) { return choice.toLowerCase() === session.text.toLowerCase(); });
-                return choice && { choice: choice };
-            },
-            handler: handler
-        };
+        this.add(promptKey, {
+            recognizer: function (session) { return session.text; },
+            handler: handler,
+            creator: function (session) {
+                _this.setPromptKey(session, promptKey);
+                session.reply(text);
+            }
+        });
     };
-    Prompt.prototype.confirm = function (handler) {
-        return {
-            recognizer: function (session) {
-                var confirm = session.text.toLowerCase() === 'yes'; // TO DO we can do better than this
-                return { confirm: confirm };
-            },
-            handler: handler
-        };
+    Prompt.prototype.choice = function (promptKey, text, choices, handler) {
+        var _this = this;
+        this.add(promptKey, {
+            recognizer: function (session) { return choices.find(function (choice) { return choice.toLowerCase() === session.text.toLowerCase(); }); },
+            handler: handler,
+            creator: function (session) {
+                _this.setPromptKey(session, promptKey);
+                session.reply({
+                    type: 'message',
+                    from: { id: 'MyBot' },
+                    text: text,
+                    suggestedActions: { actions: choices.map(function (choice) { return ({
+                            type: 'postBack',
+                            title: choice,
+                            value: choice
+                        }); }) }
+                });
+            }
+        });
+    };
+    Prompt.prototype.confirm = function (promptKey, text, handler) {
+        var _this = this;
+        this.add(promptKey, {
+            recognizer: function (session) { return session.text.toLowerCase() === 'yes'; },
+            handler: handler,
+            creator: function (session) {
+                _this.setPromptKey(session, promptKey);
+                session.reply({
+                    type: 'message',
+                    from: { id: 'MyBot' },
+                    text: text,
+                    suggestedActions: { actions: ['Yes', 'No'].map(function (choice) { return ({
+                            type: 'postBack',
+                            title: choice,
+                            value: choice
+                        }); }) }
+                });
+            }
+        });
     };
     Prompt.prototype.rule = function () {
         var _this = this;
         return Rules_1.filter(function (session) { return _this.getPromptKey(session) !== undefined; }, {
             recognizer: function (session) {
                 console.log("prompt looking for", _this.getPromptKey(session));
-                var rule = _this.promptRules[_this.getPromptKey(session)];
+                var rule = _this.prompts[_this.getPromptKey(session)];
                 return rule && rule.recognizer(session);
             },
             handler: function (session, args) {
-                var rule = _this.promptRules[_this.getPromptKey(session)];
+                var handler = _this.prompts[_this.getPromptKey(session)].handler;
                 _this.setPromptKey(session, undefined);
-                return rule.handler(session, args);
+                return handler(session, args);
             },
             name: "PROMPT"
         });
     };
-    // Prompt Message Creators -- feels like these maybe belong in the connectors?
-    Prompt.prototype.textCreate = function (session, promptKey, text) {
-        this.setPromptKey(session, promptKey);
-        session.reply(text);
-    };
-    Prompt.prototype.choiceCreate = function (session, promptKey, choiceName, text) {
-        var choiceList = this.choiceLists[choiceName];
-        if (!choiceList)
-            return;
-        this.setPromptKey(session, promptKey);
-        session.reply({
-            type: 'message',
-            from: { id: 'RecipeBot' },
-            text: text,
-            suggestedActions: { actions: choiceList.map(function (choice) { return ({
-                    type: 'postBack',
-                    title: choice,
-                    value: choice
-                }); }) }
-        });
-    };
-    Prompt.prototype.confirmCreate = function (session, promptKey, text) {
-        this.setPromptKey(session, promptKey);
-        session.reply({
-            type: 'message',
-            from: { id: 'RecipeBot' },
-            text: text,
-            suggestedActions: { actions: this.yorn.map(function (choice) { return ({
-                    type: 'postBack',
-                    title: choice,
-                    value: choice
-                }); }) }
-        });
+    Prompt.prototype.reply = function (promptKey) {
+        return this.prompts[promptKey].creator;
     };
     return Prompt;
 }());
