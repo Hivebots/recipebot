@@ -1097,7 +1097,7 @@ function __export(m) {
 Object.defineProperty(exports, "__esModule", { value: true });
 // Rules
 __export(__webpack_require__(36));
-// Recognizers
+// Matchers
 __export(__webpack_require__(150));
 __export(__webpack_require__(153));
 __export(__webpack_require__(151));
@@ -1105,7 +1105,7 @@ __export(__webpack_require__(151));
 __export(__webpack_require__(54));
 __export(__webpack_require__(149));
 __export(__webpack_require__(148));
-// Session Providers
+// Input Providers
 __export(__webpack_require__(152));
 
 
@@ -2574,13 +2574,13 @@ module.exports = setBindData;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var rxjs_1 = __webpack_require__(15);
-exports.always = function (session) { return rxjs_1.Observable.of(true); };
-exports.rule = function (recognizer, handler, name) { return ({
-    recognizer: recognizer,
-    handler: handler,
+exports.always = function (input) { return rxjs_1.Observable.of(true); };
+exports.rule = function (matcher, action, name) { return ({
+    matcher: matcher,
+    action: action,
     name: name
 }); };
-exports.defaultRule = function (handler) { return exports.rule(exports.always, handler); };
+exports.defaultRule = function (action) { return exports.rule(exports.always, action); };
 exports.arrayize = function (stuff) { return Array.isArray(stuff) ? stuff : [stuff]; };
 var observize = function (t) {
     if (t instanceof rxjs_1.Observable)
@@ -2589,21 +2589,21 @@ var observize = function (t) {
         return rxjs_1.Observable.fromPromise(t);
     return rxjs_1.Observable.of(t);
 };
-exports.runRecognizer = function (session, recognizer) {
-    return observize(recognizer(session))
-        .filter(function (result) { return !!result; })
-        .do(function (args) { return console.log("recognizer result", args); });
+exports.doMatcher = function (input, matcher) {
+    return observize(matcher(input))
+        .filter(function (result) { return result !== undefined && result !== null; })
+        .do(function (args) { return console.log("matcher result", args); });
 };
-exports.runHandler = function (session, args, handler) {
-    console.log("resolving handler");
-    return observize(handler(session, args))
-        .do(function (result) { return console.log("handler result", result); })
-        .take(1); // because handlers may emit more than one value
+exports.doAction = function (input, args, action) {
+    console.log("resolving action");
+    return observize(action(input, args))
+        .do(function (result) { return console.log("action result", result); })
+        .take(1); // because actions may emit more than one value
 };
-exports.executeRule = function (session, rule) {
-    return exports.runRecognizer(session, rule.recognizer)
+exports.executeRule = function (input, rule) {
+    return exports.doMatcher(input, rule.matcher)
         .do(function (args) { return console.log("rule " + rule.name + " succeeded!", args); })
-        .flatMap(function (args) { return exports.runHandler(session, args, rule.handler); });
+        .flatMap(function (args) { return exports.doAction(input, args, rule.action); });
 };
 exports.firstMatch = function () {
     var rules = [];
@@ -2611,17 +2611,17 @@ exports.firstMatch = function () {
         rules[_i] = arguments[_i];
     }
     return ({
-        recognizer: function (session) {
+        matcher: function (input) {
             return rxjs_1.Observable.from(rules)
                 .switchMap(function (rule, index) {
                 console.log("evaluating " + rule.name);
-                return exports.runRecognizer(session, rule.recognizer)
+                return exports.doMatcher(input, rule.matcher)
                     .map(function (args) { return ({ index: index, args: args }); });
             })
                 .take(1);
         },
-        handler: function (session, args) { return rules[args.index].handler(session, args.args); },
-        name: "firstMatch of " + rules.length + " rules"
+        action: function (input, args) { return rules[args.index].action(input, args.args); },
+        name: "firstMatcher of " + rules.length + " rules"
     });
 };
 exports.bestMatch = function () {
@@ -2632,13 +2632,13 @@ exports.bestMatch = function () {
     // This will require the ability to score individual rules
 };
 exports.filter = function (query, rule) { return ({
-    recognizer: function (session) {
-        return observize(query(session))
+    matcher: function (input) {
+        return observize(query(input))
             .filter(function (result) { return !!result; })
             .do(function (_) { return console.log(""); })
-            .flatMap(function (_) { return exports.runRecognizer(session, rule.recognizer); });
+            .flatMap(function (_) { return exports.doMatcher(input, rule.matcher); });
     },
-    handler: rule.handler,
+    action: rule.action,
     name: "filter rule " + rule.name
 }); };
 
@@ -7653,65 +7653,66 @@ var store = redux_1.createStore(redux_1.combineReducers({
 }));
 var recipeBotChat = new prague_2.ReduxChat(new prague_1.UniversalChat(webChat.chatConnector), store, function (state) { return state.bot; });
 var prague_3 = __webpack_require__(10);
-var reply = function (text) { return function (session) { return session.reply(text); }; };
+var reply = function (text) { return function (input) { return input.reply(text); }; };
 // Prompts
 var prague_4 = __webpack_require__(10);
-var prompt = new prague_4.Prompt(function (session) { return session.data.userInConversation.promptKey; }, function (session, promptKey) { return session.store.dispatch({ type: 'Set_PromptKey', promptKey: promptKey }); });
+var prompt = new prague_4.Prompt(function (input) { return input.data.userInConversation.promptKey; }, function (input, promptKey) { return input.store.dispatch({ type: 'Set_PromptKey', promptKey: promptKey }); });
 var cheeses = ['Cheddar', 'Wensleydale', 'Brie', 'Velveeta'];
-prompt.text('Favorite_Color', "What is your favorite color?", function (session, args) {
-    return session.reply(args === "blue" ? "That is correct!" : "That is incorrect");
+prompt.text('Favorite_Color', "What is your favorite color?", function (input, args) {
+    return input.reply(args === "blue" ? "That is correct!" : "That is incorrect");
 });
-prompt.choice('Favorite_Cheese', "What is your favorite cheese?", cheeses, function (session, args) {
-    return session.reply(args === "Velveeta" ? "Ima let you finish but FYI that is not really cheese." : "Interesting.");
+prompt.choice('Favorite_Cheese', "What is your favorite cheese?", cheeses, function (input, args) {
+    return input.reply(args === "Velveeta" ? "Ima let you finish but FYI that is not really cheese." : "Interesting.");
 });
-prompt.confirm('Like_Cheese', "Do you like cheese?", function (session, args) {
-    return session.reply(args ? "That is correct." : "That is incorrect.");
+prompt.confirm('Like_Cheese', "Do you like cheese?", function (input, args) {
+    console.log("args", args);
+    return input.reply(args ? "That is correct." : "That is incorrect.");
 });
 // Intents
-// Message handlers
-var chooseRecipe = function (session, args) {
+// Message actions
+var chooseRecipe = function (input, args) {
     var name = args.groups[1];
     var recipe = recipeFromName(name);
     if (recipe) {
-        session.store.dispatch({ type: 'Set_Recipe', recipe: recipe });
+        input.store.dispatch({ type: 'Set_Recipe', recipe: recipe });
         return rxjs_1.Observable.from([
             "Great, let's make " + name + " which " + recipe.recipeYield.toLowerCase() + "!",
             "Here are the ingredients:"
         ].concat(recipe.recipeIngredient, [
             "Let me know when you're ready to go."
         ]))
-            .do(function (ingredient) { return session.reply(ingredient); })
+            .do(function (ingredient) { return input.reply(ingredient); })
             .count();
     }
     else {
-        return session.replyAsync("Sorry, I don't know how to make " + name + ". Maybe one day you can teach me.");
+        return input.replyAsync("Sorry, I don't know how to make " + name + ". Maybe one day you can teach me.");
     }
 };
-var queryQuantity = function (session, args) {
+var queryQuantity = function (input, args) {
     var ingredientQuery = args.groups[1].split('');
-    var ingredient = session.data.userInConversation.recipe.recipeIngredient
+    var ingredient = input.data.userInConversation.recipe.recipeIngredient
         .map(function (i) { return [i, lcs(i.split(''), ingredientQuery).length]; })
         .reduce(function (prev, curr) { return prev[1] > curr[1] ? prev : curr; })[0];
-    session.reply(ingredient);
+    input.reply(ingredient);
 };
-var nextInstruction = function (session, args) {
-    var nextInstruction = session.data.userInConversation.lastInstructionSent + 1;
-    if (nextInstruction < session.data.userInConversation.recipe.recipeInstructions.length)
-        sayInstruction(session, { instruction: nextInstruction });
+var nextInstruction = function (input, args) {
+    var nextInstruction = input.data.userInConversation.lastInstructionSent + 1;
+    if (nextInstruction < input.data.userInConversation.recipe.recipeInstructions.length)
+        sayInstruction(input, { instruction: nextInstruction });
     else
-        session.reply("That's it!");
+        input.reply("That's it!");
 };
-var previousInstruction = function (session, args) {
-    var prevInstruction = session.data.userInConversation.lastInstructionSent - 1;
+var previousInstruction = function (input, args) {
+    var prevInstruction = input.data.userInConversation.lastInstructionSent - 1;
     if (prevInstruction >= 0)
-        sayInstruction(session, { instruction: prevInstruction });
+        sayInstruction(input, { instruction: prevInstruction });
     else
-        session.reply("We're at the beginning.");
+        input.reply("We're at the beginning.");
 };
-var sayInstruction = function (session, args) {
-    session.reply(session.data.userInConversation.recipe.recipeInstructions[args.instruction]);
-    if (session.data.userInConversation.recipe.recipeInstructions.length === args.instruction + 1)
-        session.reply("That's it!");
+var sayInstruction = function (input, args) {
+    input.reply(input.data.userInConversation.recipe.recipeInstructions[args.instruction]);
+    if (input.data.userInConversation.recipe.recipeInstructions.length === args.instruction + 1)
+        input.reply("That's it!");
     store.dispatch({ type: 'Set_Instruction', instruction: args.instruction });
 };
 var globalDefaultRule = prague_3.defaultRule(reply("I can't understand you. It's you, not me. Get it together and try again."));
@@ -7720,8 +7721,8 @@ var recipeFromName = function (name) {
 };
 var queries = {
     always: prague_3.always,
-    noRecipe: function (session) { return !session.data.userInConversation.recipe; },
-    noInstructionsSent: function (session) { return session.data.userInConversation.lastInstructionSent === undefined; },
+    noRecipe: function (input) { return !input.data.userInConversation.recipe; },
+    noInstructionsSent: function (input) { return input.data.userInConversation.lastInstructionSent === undefined; },
 };
 // RegExp
 var intents = {
@@ -7754,23 +7755,23 @@ prompt.rule(),
 prague_3.filter(queries.always, prague_3.firstMatch(re.rule(intents.askQuestion, prompt.reply('Favorite_Color')), re.rule(intents.askYorNQuestion, prompt.reply('Like_Cheese')), re.rule(intents.askChoiceQuestion, prompt.reply('Favorite_Cheese')))), 
 // For testing LUIS
 prague_3.filter(queries.always, luis.rule('testModel', [
-    luis.intent('singASong', function (session, args) { return session.reply("Let's sing " + args.song); }),
-    luis.intent('findSomething', function (session, args) { return session.reply("Okay let's find a " + args.what + " in " + args.where); })
+    luis.intent('singASong', function (input, args) { return input.reply("Let's sing " + args.song); }),
+    luis.intent('findSomething', function (input, args) { return input.reply("Okay let's find a " + args.what + " in " + args.where); })
 ])), 
 // If there is no recipe, we have to pick one
 prague_3.filter(queries.noRecipe, prague_3.firstMatch(re.rule(intents.chooseRecipe, chooseRecipe), re.rule([intents.queryQuantity, intents.instructions.start, intents.instructions.restart], reply("First please choose a recipe")), re.rule(intents.all, chooseRecipe))), 
 // Now that we have a recipe, these can happen at any time
 prague_3.filter(queries.always, re.rule(intents.queryQuantity, queryQuantity)), 
 // If we haven't started listing instructions, wait for the user to tell us to start
-prague_3.filter(queries.noInstructionsSent, re.rule([intents.instructions.start, intents.instructions.next], function (session, args) { return sayInstruction(session, { instruction: 0 }); })), 
+prague_3.filter(queries.noInstructionsSent, re.rule([intents.instructions.start, intents.instructions.next], function (input, args) { return sayInstruction(input, { instruction: 0 }); })), 
 // We are listing instructions. Let the user navigate among them.
-prague_3.filter(queries.always, prague_3.firstMatch(re.rule(intents.instructions.next, nextInstruction), re.rule(intents.instructions.repeat, function (session, args) { return sayInstruction(session, { instruction: session.data.userInConversation.lastInstructionSent }); }), re.rule(intents.instructions.previous, previousInstruction), re.rule(intents.instructions.restart, function (session, args) { return sayInstruction(session, { instruction: 0 }); }), globalDefaultRule)));
-recipeBotChat.session$
-    .do(function (session) { return console.log("message", session.message); })
-    .do(function (session) { return console.log("state before", session.state); })
-    .flatMap(function (session) {
-    return prague_3.executeRule(session, recipeRule)
-        .do(function (_) { return console.log("state after", session.store.getState()); });
+prague_3.filter(queries.always, prague_3.firstMatch(re.rule(intents.instructions.next, nextInstruction), re.rule(intents.instructions.repeat, function (input, args) { return sayInstruction(input, { instruction: input.data.userInConversation.lastInstructionSent }); }), re.rule(intents.instructions.previous, previousInstruction), re.rule(intents.instructions.restart, function (input, args) { return sayInstruction(input, { instruction: 0 }); }), globalDefaultRule)));
+recipeBotChat.input$
+    .do(function (input) { return console.log("message", input.message); })
+    .do(function (input) { return console.log("state before", input.state); })
+    .flatMap(function (input) {
+    return prague_3.executeRule(input, recipeRule)
+        .do(function (_) { return console.log("state after", input.store.getState()); });
 })
     .subscribe();
 
@@ -11036,30 +11037,30 @@ var LUIS = (function () {
         }
         return rxjs_1.Observable.of(result);
     };
-    LUIS.prototype.intent = function (intent, handler) {
+    LUIS.prototype.intent = function (intent, action) {
         return {
             intent: intent,
-            handler: handler
+            action: action
         };
     };
     // "classic" LUIS usage - for a given model, say what to do with each intent above a given threshold
-    // IMPORTANT: the order of rules is not important - the handler for the *highest-ranked intent* will be executed
+    // IMPORTANT: the order of rules is not important - the action for the *highest-ranked intent* will be executed
     LUIS.prototype.rule = function (modelName, luisRules, threshold) {
         var _this = this;
         if (threshold === void 0) { threshold = .50; }
         return {
-            recognizer: function (session) {
-                return _this.call(modelName, session.text)
+            matcher: function (input) {
+                return _this.call(modelName, input.text)
                     .flatMap(function (luisResult) {
                     return rxjs_1.Observable.from(luisResult)
-                        .filter(function (match) { return match.threshold >= threshold; })
-                        .filter(function (match) { return luisRules.some(function (luisRule) { return luisRule.intent === match.intent; }); })
+                        .filter(function (matcher) { return matcher.threshold >= threshold; })
+                        .filter(function (matcher) { return luisRules.some(function (luisRule) { return luisRule.intent === matcher.intent; }); })
                         .take(1);
                 } // take the highest ranked intent in our rule list
                 );
             },
-            handler: function (session, args) {
-                return luisRules.find(function (luisRule) { return luisRule.intent === args.intent; }).handler(session, args.entities);
+            action: function (input, args) {
+                return luisRules.find(function (luisRule) { return luisRule.intent === args.intent; }).action(input, args.entities);
             },
             name: "LUIS: " + modelName + "/" + luisRules.map(function (lr) { return lr.intent; }).join('+')
         };
@@ -11075,6 +11076,14 @@ exports.LUIS = LUIS;
 
 "use strict";
 
+var __assign = (this && this.__assign) || Object.assign || function(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+    }
+    return t;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var Rules_1 = __webpack_require__(36);
 var Prompt = (function () {
@@ -11091,25 +11100,25 @@ var Prompt = (function () {
         this.prompts[promptKey] = promptStuff;
     };
     // Prompt Rule Creators
-    Prompt.prototype.text = function (promptKey, text, handler) {
+    Prompt.prototype.text = function (promptKey, text, action) {
         var _this = this;
         this.add(promptKey, {
-            recognizer: function (session) { return session.text; },
-            handler: handler,
-            creator: function (session) {
-                _this.setPromptKey(session, promptKey);
-                session.reply(text);
+            matcher: function (input) { return input.text; },
+            action: action,
+            creator: function (input) {
+                _this.setPromptKey(input, promptKey);
+                input.reply(text);
             }
         });
     };
-    Prompt.prototype.choice = function (promptKey, text, choices, handler) {
+    Prompt.prototype.choicePrompt = function (promptKey, text, choices, action) {
         var _this = this;
-        this.add(promptKey, {
-            recognizer: function (session) { return choices.find(function (choice) { return choice.toLowerCase() === session.text.toLowerCase(); }); },
-            handler: handler,
-            creator: function (session) {
-                _this.setPromptKey(session, promptKey);
-                session.reply({
+        return {
+            matcher: function (input) { return choices.find(function (choice) { return choice.toLowerCase() === input.text.toLowerCase(); }); },
+            action: action,
+            creator: function (input) {
+                _this.setPromptKey(input, promptKey);
+                input.reply({
                     type: 'message',
                     from: { id: 'MyBot' },
                     text: text,
@@ -11120,40 +11129,30 @@ var Prompt = (function () {
                         }); }) }
                 });
             }
-        });
+        };
     };
-    Prompt.prototype.confirm = function (promptKey, text, handler) {
-        var _this = this;
-        this.add(promptKey, {
-            recognizer: function (session) { return session.text.toLowerCase() === 'yes'; },
-            handler: handler,
-            creator: function (session) {
-                _this.setPromptKey(session, promptKey);
-                session.reply({
-                    type: 'message',
-                    from: { id: 'MyBot' },
-                    text: text,
-                    suggestedActions: { actions: ['Yes', 'No'].map(function (choice) { return ({
-                            type: 'postBack',
-                            title: choice,
-                            value: choice
-                        }); }) }
-                });
-            }
-        });
+    Prompt.prototype.choice = function (promptKey, text, choices, action) {
+        this.add(promptKey, this.choicePrompt(promptKey, text, choices, action));
+    };
+    Prompt.prototype.confirm = function (promptKey, text, action) {
+        var choice = this.choicePrompt(promptKey, text, ['Yes', 'No'], action);
+        this.add(promptKey, __assign({}, choice, { matcher: function (input) {
+                var args = choice.matcher(input);
+                return args !== undefined && args === 'Yes';
+            } }));
     };
     Prompt.prototype.rule = function () {
         var _this = this;
-        return Rules_1.filter(function (session) { return _this.getPromptKey(session) !== undefined; }, {
-            recognizer: function (session) {
-                console.log("prompt looking for", _this.getPromptKey(session));
-                var rule = _this.prompts[_this.getPromptKey(session)];
-                return rule && rule.recognizer(session);
+        return Rules_1.filter(function (input) { return _this.getPromptKey(input) !== undefined; }, {
+            matcher: function (input) {
+                console.log("prompt looking for", _this.getPromptKey(input));
+                var rule = _this.prompts[_this.getPromptKey(input)];
+                return rule && rule.matcher(input);
             },
-            handler: function (session, args) {
-                var handler = _this.prompts[_this.getPromptKey(session)].handler;
-                _this.setPromptKey(session, undefined);
-                return handler(session, args);
+            action: function (input, args) {
+                var action = _this.prompts[_this.getPromptKey(input)].action;
+                _this.setPromptKey(input, undefined);
+                return action(input, args);
             },
             name: "PROMPT"
         });
@@ -11174,8 +11173,8 @@ exports.Prompt = Prompt;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var Chat_1 = __webpack_require__(54);
-var ReduxChatSession = (function () {
-    function ReduxChatSession(message, chat, store, getBotData) {
+var ReduxChatInput = (function () {
+    function ReduxChatInput(message, chat, store, getBotData) {
         this.message = message;
         this.chat = chat;
         this.store = store;
@@ -11185,24 +11184,24 @@ var ReduxChatSession = (function () {
         this.text = message.text;
         this.data = getBotData(this.state);
     }
-    ReduxChatSession.prototype.reply = function (activity) {
+    ReduxChatInput.prototype.reply = function (activity) {
         this.chat.send(this.address, activity);
     };
-    ReduxChatSession.prototype.replyAsync = function (activity) {
+    ReduxChatInput.prototype.replyAsync = function (activity) {
         return this.chat.sendAsync(this.address, activity);
     };
-    return ReduxChatSession;
+    return ReduxChatInput;
 }());
-exports.ReduxChatSession = ReduxChatSession;
+exports.ReduxChatInput = ReduxChatInput;
 var ReduxChat = (function () {
     function ReduxChat(chat, store, getBotData) {
         var _this = this;
         this.chat = chat;
         this.store = store;
         this.getBotData = getBotData;
-        this.session$ = chat.activity$
+        this.input$ = chat.activity$
             .filter(function (activity) { return activity.type === 'message'; })
-            .map(function (message) { return new ReduxChatSession(message, _this.chat, _this.store, _this.getBotData); });
+            .map(function (message) { return new ReduxChatInput(message, _this.chat, _this.store, _this.getBotData); });
     }
     return ReduxChat;
 }());
@@ -11221,18 +11220,18 @@ var Rules_1 = __webpack_require__(36);
 var RE = (function () {
     function RE() {
     }
-    // Either call as re(intent, handler) or test([intent, intent, ...], handler)
-    RE.prototype.rule = function (intents, handler) {
+    // Either call as re(intent, action) or test([intent, intent, ...], action)
+    RE.prototype.rule = function (intents, action) {
         return {
-            recognizer: function (session) {
+            matcher: function (input) {
                 return rxjs_1.Observable.from(Rules_1.arrayize(intents))
-                    .map(function (regexp) { return regexp.exec(session.text); })
-                    .filter(function (groups) { return groups && groups[0] === session.text; })
+                    .map(function (regexp) { return regexp.exec(input.text); })
+                    .filter(function (groups) { return groups && groups[0] === input.text; })
                     .take(1)
                     .map(function (groups) { return ({ groups: groups }); })
                     .do(function (args) { return console.log("RegEx result", args); });
             },
-            handler: handler,
+            action: action,
             name: "REGEXP"
         };
     };
