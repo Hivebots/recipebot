@@ -142,16 +142,14 @@ const prompt = new Prompt<RecipeBotInput>(
 
 const cheeses = ['Cheddar', 'Wensleydale', 'Brie', 'Velveeta'];
 
-prompt.text('Favorite_Color', "What is your favorite color?", (input, args: string) => {
-    console.log("args", args);
-    return input.reply(args === "blue" ? "That is correct!" : "That is incorrect")});
+prompt.text('Favorite_Color', "What is your favorite color?", (input, args) =>
+    input.reply(args === "blue" ? "That is correct!" : "That is incorrect"));
 
-prompt.choice('Favorite_Cheese', "What is your favorite cheese?", cheeses, (input, args: string) =>
+prompt.choice('Favorite_Cheese', "What is your favorite cheese?", cheeses, (input, args) =>
     input.reply(args === "Velveeta" ? "Ima let you finish but FYI that is not really cheese." : "Interesting."));
 
-prompt.confirm('Like_Cheese', "Do you like cheese?", (input, args) => {
-    console.log("args", args);
-    return input.reply(args ? "That is correct." : "That is incorrect.");});
+prompt.confirm('Like_Cheese', "Do you like cheese?", (input, args) =>
+    input.reply(args ? "That is correct." : "That is incorrect."));
 
 // Intents
 

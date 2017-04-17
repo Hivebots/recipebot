@@ -7656,14 +7656,12 @@ var prague_4 = __webpack_require__(10);
 var prompt = new prague_4.Prompt(function (input) { return input.data.userInConversation.promptKey; }, function (input, promptKey) { return input.store.dispatch({ type: 'Set_PromptKey', promptKey: promptKey }); });
 var cheeses = ['Cheddar', 'Wensleydale', 'Brie', 'Velveeta'];
 prompt.text('Favorite_Color', "What is your favorite color?", function (input, args) {
-    console.log("args", args);
     return input.reply(args === "blue" ? "That is correct!" : "That is incorrect");
 });
 prompt.choice('Favorite_Cheese', "What is your favorite cheese?", cheeses, function (input, args) {
     return input.reply(args === "Velveeta" ? "Ima let you finish but FYI that is not really cheese." : "Interesting.");
 });
 prompt.confirm('Like_Cheese', "Do you like cheese?", function (input, args) {
-    console.log("args", args);
     return input.reply(args ? "That is correct." : "That is incorrect.");
 });
 // Intents
@@ -11077,14 +11075,6 @@ exports.LUIS = LUIS;
 
 "use strict";
 
-var __assign = (this && this.__assign) || Object.assign || function(t) {
-    for (var s, i = 1, n = arguments.length; i < n; i++) {
-        s = arguments[i];
-        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-            t[p] = s[p];
-    }
-    return t;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 var Rules_1 = __webpack_require__(36);
 var rxjs_1 = __webpack_require__(15);
@@ -11146,15 +11136,19 @@ var Prompt = (function () {
         this.add(promptKey, this.choicePrompt(promptKey, text, choices, action));
     };
     Prompt.prototype.confirm = function (promptKey, text, action) {
-        var choice = this.choicePrompt(promptKey, text, ['Yes', 'No'], action);
-        this.add(promptKey, __assign({}, choice, { matcher: function (input) {
+        var choice = this.choicePrompt(promptKey, text, ['Yes', 'No'], null);
+        this.add(promptKey, {
+            creator: choice.creator,
+            action: action,
+            matcher: function (input) {
                 return Rules_1.observize(choice.matcher(input))
                     .filter(function (args) { return args !== undefined && args !== null; })
                     .map(function (args) { return ({
                     score: 1,
                     args: args.args === 'Yes',
                 }); });
-            } }));
+            }
+        });
     };
     Prompt.prototype.rule = function () {
         var _this = this;
