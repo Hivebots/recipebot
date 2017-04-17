@@ -127,7 +127,7 @@ const store = createStore(
 
 const recipeBotChat = new ReduxChat(new UniversalChat(webChat.chatConnector), store, state => state.bot);
 
-import { executeRule, Action, defaultRule, always, rule, Queries, firstMatch, filter } from 'prague';
+import { doRule, Action, Queries, firstMatch, filter, Match } from 'prague';
 
 const reply = (text: string): Action<IChatInput> => (input) => input.reply(text);
 
@@ -142,8 +142,9 @@ const prompt = new Prompt<RecipeBotInput>(
 
 const cheeses = ['Cheddar', 'Wensleydale', 'Brie', 'Velveeta'];
 
-prompt.text('Favorite_Color', "What is your favorite color?", (input, args: string) =>
-    input.reply(args === "blue" ? "That is correct!" : "That is incorrect"));
+prompt.text('Favorite_Color', "What is your favorite color?", (input, args: string) => {
+    console.log("args", args);
+    return input.reply(args === "blue" ? "That is correct!" : "That is incorrect")});
 
 prompt.choice('Favorite_Cheese', "What is your favorite cheese?", cheeses, (input, args: string) =>
     input.reply(args === "Velveeta" ? "Ima let you finish but FYI that is not really cheese." : "Interesting."));
@@ -210,13 +211,12 @@ const sayInstruction: Action<RecipeBotInput> = (input, args: { instruction: numb
     store.dispatch<RecipeAction>({ type: 'Set_Instruction', instruction: args.instruction });
 }
 
-const globalDefaultRule = defaultRule(reply("I can't understand you. It's you, not me. Get it together and try again."));
+// const globalDefaultRule = defaultRule(reply("I can't understand you. It's you, not me. Get it together and try again."));
 
 const recipeFromName = (name: string) =>
     recipes.find(recipe => recipe.name.toLowerCase() === name.toLowerCase());
 
 const queries: Queries<RecipeBotInput> = {
-    always: always,
     noRecipe: (input) => !input.data.userInConversation.recipe,
     noInstructionsSent: (input) => input.data.userInConversation.lastInstructionSent === undefined,
 }
@@ -251,24 +251,24 @@ const luis = new LUIS<RecipeBotInput>({
     key: 'key'
 });
 
-const recipeRule = firstMatch(
+const recipeRule = firstMatch<RecipeBotInput>(
 
     // Prompts
     prompt.rule(),
 
     // For testing Prompts
-    filter(queries.always, firstMatch(
+    firstMatch(
         re.rule(intents.askQuestion, prompt.reply('Favorite_Color')),
         re.rule(intents.askYorNQuestion, prompt.reply('Like_Cheese')),
         re.rule(intents.askChoiceQuestion, prompt.reply('Favorite_Cheese'))
-    )),
+    ),
 
     // For testing LUIS
 
-    filter(queries.always, luis.rule('testModel', [
+    luis.bestMatch('testModel', [
         luis.intent('singASong', (input, args) => input.reply(`Let's sing ${args.song}`)),
         luis.intent('findSomething', (input, args) => input.reply(`Okay let's find a ${args.what} in ${args.where}`))
-    ])),
+    ]),
 
     // If there is no recipe, we have to pick one
     filter(queries.noRecipe, firstMatch(
@@ -278,9 +278,7 @@ const recipeRule = firstMatch(
     )),
 
     // Now that we have a recipe, these can happen at any time
-    filter(queries.always,
-        re.rule(intents.queryQuantity, queryQuantity), // TODO: conversions go here
-    ),
+    re.rule(intents.queryQuantity, queryQuantity), // TODO: conversions go here
 
     // If we haven't started listing instructions, wait for the user to tell us to start
     filter(queries.noInstructionsSent,
@@ -288,21 +286,20 @@ const recipeRule = firstMatch(
     ),
 
     // We are listing instructions. Let the user navigate among them.
-    filter(queries.always, firstMatch(
+    firstMatch(
         re.rule(intents.instructions.next, nextInstruction),
         re.rule(intents.instructions.repeat, (input, args) => sayInstruction(input, { instruction: input.data.userInConversation.lastInstructionSent })),
         re.rule(intents.instructions.previous, previousInstruction),
         re.rule(intents.instructions.restart, (input, args) => sayInstruction(input, { instruction: 0 })),
-        globalDefaultRule
-    ))
-
+        // globalDefaultRule
+    )
 );
 
 recipeBotChat.input$
 .do(input => console.log("message", input.message))
 .do(input => console.log("state before", input.state))
 .flatMap(input =>
-    executeRule(input, recipeRule)
+    doRule(input, recipeRule)
     .do(_ => console.log("state after", input.store.getState()))
 )
 .subscribe();

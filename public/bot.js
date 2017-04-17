@@ -2574,73 +2574,70 @@ module.exports = setBindData;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var rxjs_1 = __webpack_require__(15);
-exports.always = function (input) { return rxjs_1.Observable.of(true); };
-exports.rule = function (matcher, action, name) { return ({
-    matcher: matcher,
-    action: action,
-    name: name
-}); };
-exports.defaultRule = function (action) { return exports.rule(exports.always, action); };
+// export const defaultRule = <S>(action: Action<S>): Rule<S> => (input: S) => action(input);
 exports.arrayize = function (stuff) { return Array.isArray(stuff) ? stuff : [stuff]; };
-var observize = function (t) {
+exports.observize = function (t) {
     if (t instanceof rxjs_1.Observable)
         return t;
     if (t instanceof Promise)
         return rxjs_1.Observable.fromPromise(t);
     return rxjs_1.Observable.of(t);
 };
-exports.doMatcher = function (input, matcher) {
-    return observize(matcher(input))
+exports.rule = function (matcher, action) { return function (input) {
+    return exports.observize(matcher(input))
+        .do(function (result) { return console.log("matcher result", result); })
         .filter(function (result) { return result !== undefined && result !== null; })
-        .do(function (args) { return console.log("matcher result", args); });
+        .map(function (args) { return ({
+        score: args.score,
+        action: function () {
+            console.log("resolving action");
+            return exports.observize(action(input, args))
+                .do(function (result) { return console.log("action result", result); })
+                .take(1); // because actions may emit more than one value
+        }
+    }); });
+}; };
+exports.doRule = function (input, rule) {
+    return exports.observize(rule(input))
+        .flatMap(function (match) { return exports.observize(match.action()); });
 };
-exports.doAction = function (input, args, action) {
-    console.log("resolving action");
-    return observize(action(input, args))
-        .do(function (result) { return console.log("action result", result); })
-        .take(1); // because actions may emit more than one value
-};
-exports.executeRule = function (input, rule) {
-    return exports.doMatcher(input, rule.matcher)
-        .do(function (args) { return console.log("rule " + rule.name + " succeeded!", args); })
-        .flatMap(function (args) { return exports.doAction(input, args, rule.action); });
-};
+exports.firstMatch$ = function (rule$) { return function (input) {
+    return rule$
+        .do(function (_) { return console.log("firstMatch: trying rule"); })
+        .switchMap(function (rule) { return exports.observize(rule(input)); })
+        .take(1);
+}; }; // so that we don't keep going through rules
 exports.firstMatch = function () {
     var rules = [];
     for (var _i = 0; _i < arguments.length; _i++) {
         rules[_i] = arguments[_i];
     }
-    return ({
-        matcher: function (input) {
-            return rxjs_1.Observable.from(rules)
-                .switchMap(function (rule, index) {
-                console.log("evaluating " + rule.name);
-                return exports.doMatcher(input, rule.matcher)
-                    .map(function (args) { return ({ index: index, args: args }); });
-            })
-                .take(1);
-        },
-        action: function (input, args) { return rules[args.index].action(input, args.args); },
-        name: "firstMatcher of " + rules.length + " rules"
-    });
+    return function (input) {
+        return exports.firstMatch$(rxjs_1.Observable.from(rules))(input);
+    };
 };
+exports.bestMatch$ = function (rule$) { return function (input) {
+    return rule$
+        .do(function (_) { return console.log("bestMatch$: trying rule"); })
+        .flatMap(function (rule) { return exports.observize(rule(input)); })
+        .takeWhile(function (match) { return match.score !== 1; })
+        .reduce(function (prev, current) { return prev && prev.score > current.score ? prev : current; });
+}; };
+// TODO: don't call reduce if current.score === 1
 exports.bestMatch = function () {
     var rules = [];
     for (var _i = 0; _i < arguments.length; _i++) {
         rules[_i] = arguments[_i];
     }
-    // This will require the ability to score individual rules
+    return function (input) {
+        return exports.bestMatch$(rxjs_1.Observable.from(rules))(input);
+    };
 };
-exports.filter = function (query, rule) { return ({
-    matcher: function (input) {
-        return observize(query(input))
-            .filter(function (result) { return !!result; })
-            .do(function (_) { return console.log(""); })
-            .flatMap(function (_) { return exports.doMatcher(input, rule.matcher); });
-    },
-    action: rule.action,
-    name: "filter rule " + rule.name
-}); };
+exports.filter = function (query, rule) { return function (input) {
+    return exports.observize(query(input))
+        .filter(function (result) { return !!result; })
+        .flatMap(function (_) { return exports.observize(rule(input)); });
+}; };
 
 
 /***/ }),
@@ -7659,6 +7656,7 @@ var prague_4 = __webpack_require__(10);
 var prompt = new prague_4.Prompt(function (input) { return input.data.userInConversation.promptKey; }, function (input, promptKey) { return input.store.dispatch({ type: 'Set_PromptKey', promptKey: promptKey }); });
 var cheeses = ['Cheddar', 'Wensleydale', 'Brie', 'Velveeta'];
 prompt.text('Favorite_Color', "What is your favorite color?", function (input, args) {
+    console.log("args", args);
     return input.reply(args === "blue" ? "That is correct!" : "That is incorrect");
 });
 prompt.choice('Favorite_Cheese', "What is your favorite cheese?", cheeses, function (input, args) {
@@ -7716,12 +7714,11 @@ var sayInstruction = function (input, args) {
         input.reply("That's it!");
     store.dispatch({ type: 'Set_Instruction', instruction: args.instruction });
 };
-var globalDefaultRule = prague_3.defaultRule(reply("I can't understand you. It's you, not me. Get it together and try again."));
+// const globalDefaultRule = defaultRule(reply("I can't understand you. It's you, not me. Get it together and try again."));
 var recipeFromName = function (name) {
     return recipes.find(function (recipe) { return recipe.name.toLowerCase() === name.toLowerCase(); });
 };
 var queries = {
-    always: prague_3.always,
     noRecipe: function (input) { return !input.data.userInConversation.recipe; },
     noInstructionsSent: function (input) { return input.data.userInConversation.lastInstructionSent === undefined; },
 };
@@ -7753,25 +7750,25 @@ var recipeRule = prague_3.firstMatch(
 // Prompts
 prompt.rule(), 
 // For testing Prompts
-prague_3.filter(queries.always, prague_3.firstMatch(re.rule(intents.askQuestion, prompt.reply('Favorite_Color')), re.rule(intents.askYorNQuestion, prompt.reply('Like_Cheese')), re.rule(intents.askChoiceQuestion, prompt.reply('Favorite_Cheese')))), 
+prague_3.firstMatch(re.rule(intents.askQuestion, prompt.reply('Favorite_Color')), re.rule(intents.askYorNQuestion, prompt.reply('Like_Cheese')), re.rule(intents.askChoiceQuestion, prompt.reply('Favorite_Cheese'))), 
 // For testing LUIS
-prague_3.filter(queries.always, luis.rule('testModel', [
+luis.bestMatch('testModel', [
     luis.intent('singASong', function (input, args) { return input.reply("Let's sing " + args.song); }),
     luis.intent('findSomething', function (input, args) { return input.reply("Okay let's find a " + args.what + " in " + args.where); })
-])), 
+]), 
 // If there is no recipe, we have to pick one
 prague_3.filter(queries.noRecipe, prague_3.firstMatch(re.rule(intents.chooseRecipe, chooseRecipe), re.rule([intents.queryQuantity, intents.instructions.start, intents.instructions.restart], reply("First please choose a recipe")), re.rule(intents.all, chooseRecipe))), 
 // Now that we have a recipe, these can happen at any time
-prague_3.filter(queries.always, re.rule(intents.queryQuantity, queryQuantity)), 
+re.rule(intents.queryQuantity, queryQuantity), // TODO: conversions go here
 // If we haven't started listing instructions, wait for the user to tell us to start
 prague_3.filter(queries.noInstructionsSent, re.rule([intents.instructions.start, intents.instructions.next], function (input, args) { return sayInstruction(input, { instruction: 0 }); })), 
 // We are listing instructions. Let the user navigate among them.
-prague_3.filter(queries.always, prague_3.firstMatch(re.rule(intents.instructions.next, nextInstruction), re.rule(intents.instructions.repeat, function (input, args) { return sayInstruction(input, { instruction: input.data.userInConversation.lastInstructionSent }); }), re.rule(intents.instructions.previous, previousInstruction), re.rule(intents.instructions.restart, function (input, args) { return sayInstruction(input, { instruction: 0 }); }), globalDefaultRule)));
+prague_3.firstMatch(re.rule(intents.instructions.next, nextInstruction), re.rule(intents.instructions.repeat, function (input, args) { return sayInstruction(input, { instruction: input.data.userInConversation.lastInstructionSent }); }), re.rule(intents.instructions.previous, previousInstruction), re.rule(intents.instructions.restart, function (input, args) { return sayInstruction(input, { instruction: 0 }); })));
 recipeBotChat.input$
     .do(function (input) { return console.log("message", input.message); })
     .do(function (input) { return console.log("state before", input.state); })
     .flatMap(function (input) {
-    return prague_3.executeRule(input, recipeRule)
+    return prague_3.doRule(input, recipeRule)
         .do(function (_) { return console.log("state after", input.store.getState()); });
 })
     .subscribe();
@@ -10978,20 +10975,20 @@ var LUIS = (function () {
                         song: 'Wagon Wheel',
                         genre: undefined,
                     },
-                    threshold: .95,
+                    score: .95,
                 }, {
                     intent: 'findSomething',
                     entities: {
                         what: 'pub',
                         where: 'London',
                     },
-                    threshold: .30,
+                    score: .30,
                 }, {
                     intent: 'bestPerson',
                     entities: {
                         name: 'Bill Barnes',
                     },
-                    threshold: .05,
+                    score: .05,
                 }
             ],
             "Pubs in London": [{
@@ -11000,20 +10997,20 @@ var LUIS = (function () {
                         what: 'pub',
                         where: 'London',
                     },
-                    threshold: .75,
+                    score: .75,
                 }, {
                     intent: 'singASong',
                     entities: {
                         song: 'Wagon Wheel',
                         genre: undefined,
                     },
-                    threshold: .60,
+                    score: .60,
                 }, {
                     intent: 'bestPerson',
                     entities: {
                         name: 'Bill Barnes',
                     },
-                    threshold: .05,
+                    score: .05,
                 }
             ]
         };
@@ -11046,24 +11043,27 @@ var LUIS = (function () {
     };
     // "classic" LUIS usage - for a given model, say what to do with each intent above a given threshold
     // IMPORTANT: the order of rules is not important - the action for the *highest-ranked intent* will be executed
-    LUIS.prototype.rule = function (modelName, luisRules, threshold) {
+    LUIS.prototype.bestMatch = function (modelName, luisRules, threshold) {
         var _this = this;
         if (threshold === void 0) { threshold = .50; }
-        return {
-            matcher: function (input) {
-                return _this.call(modelName, input.text)
-                    .flatMap(function (luisResult) {
-                    return rxjs_1.Observable.from(luisResult)
-                        .filter(function (matcher) { return matcher.threshold >= threshold; })
-                        .filter(function (matcher) { return luisRules.some(function (luisRule) { return luisRule.intent === matcher.intent; }); })
-                        .take(1);
-                } // take the highest ranked intent in our rule list
-                );
-            },
-            action: function (input, args) {
-                return luisRules.find(function (luisRule) { return luisRule.intent === args.intent; }).action(input, args.entities);
-            },
-            name: "LUIS: " + modelName + "/" + luisRules.map(function (lr) { return lr.intent; }).join('+')
+        return function (input) {
+            return _this.call(modelName, input.text)
+                .flatMap(function (luisResult) {
+                return rxjs_1.Observable.from(luisResult)
+                    .do(function (luisMatch) { return console.log("luisMatch", luisMatch); })
+                    .filter(function (luisMatch) { return luisMatch.score >= threshold; })
+                    .flatMap(function (luisMatch) {
+                    return rxjs_1.Observable.of(luisRules.find(function (luisRule) { return luisRule.intent === luisMatch.intent; }))
+                        .filter(function (luisRule) { return !!luisRule; })
+                        .do(function (_) { return console.log("filtered luisMatch", luisMatch); })
+                        .map(function (luisRule) { return ({
+                        score: luisMatch.score,
+                        action: function () { return luisRule.action(input, luisMatch.entities); }
+                    }); });
+                })
+                    .take(1);
+            } // LUIS returns results ordered by best match, we return the first in our list over our threshold
+            );
         };
     };
     return LUIS;
@@ -11087,6 +11087,7 @@ var __assign = (this && this.__assign) || Object.assign || function(t) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var Rules_1 = __webpack_require__(36);
+var rxjs_1 = __webpack_require__(15);
 var Prompt = (function () {
     function Prompt(getPromptKey, setPromptKey) {
         this.getPromptKey = getPromptKey;
@@ -11104,7 +11105,10 @@ var Prompt = (function () {
     Prompt.prototype.text = function (promptKey, text, action) {
         var _this = this;
         this.add(promptKey, {
-            matcher: function (input) { return input.text; },
+            matcher: function (input) { return ({
+                score: 1,
+                args: input.text
+            }); },
             action: action,
             creator: function (input) {
                 _this.setPromptKey(input, promptKey);
@@ -11115,7 +11119,13 @@ var Prompt = (function () {
     Prompt.prototype.choicePrompt = function (promptKey, text, choices, action) {
         var _this = this;
         return {
-            matcher: function (input) { return choices.find(function (choice) { return choice.toLowerCase() === input.text.toLowerCase(); }); },
+            matcher: function (input) {
+                var choice = choices.find(function (choice) { return choice.toLowerCase() === input.text.toLowerCase(); });
+                return choice && {
+                    score: 1,
+                    args: choice
+                };
+            },
             action: action,
             creator: function (input) {
                 _this.setPromptKey(input, promptKey);
@@ -11138,25 +11148,34 @@ var Prompt = (function () {
     Prompt.prototype.confirm = function (promptKey, text, action) {
         var choice = this.choicePrompt(promptKey, text, ['Yes', 'No'], action);
         this.add(promptKey, __assign({}, choice, { matcher: function (input) {
-                var args = choice.matcher(input);
-                return args !== undefined && args === 'Yes';
+                return Rules_1.observize(choice.matcher(input))
+                    .filter(function (args) { return args !== undefined && args !== null; })
+                    .map(function (args) { return ({
+                    score: 1,
+                    args: args.args === 'Yes',
+                }); });
             } }));
     };
     Prompt.prototype.rule = function () {
         var _this = this;
-        return Rules_1.filter(function (input) { return _this.getPromptKey(input) !== undefined; }, {
-            matcher: function (input) {
-                console.log("prompt looking for", _this.getPromptKey(input));
-                var rule = _this.prompts[_this.getPromptKey(input)];
-                return rule && rule.matcher(input);
-            },
-            action: function (input, args) {
-                var action = _this.prompts[_this.getPromptKey(input)].action;
-                _this.setPromptKey(input, undefined);
-                return action(input, args);
-            },
-            name: "PROMPT"
-        });
+        return function (input) {
+            console.log("prompt looking for", _this.getPromptKey(input));
+            return rxjs_1.Observable.of(_this.getPromptKey(input))
+                .filter(function (promptKey) { return promptKey !== undefined; })
+                .map(function (promptKey) { return _this.prompts[promptKey]; })
+                .filter(function (rule) { return rule !== undefined; })
+                .flatMap(function (rule) {
+                return Rules_1.observize(rule.matcher(input))
+                    .filter(function (result) { return result !== undefined && result !== null; })
+                    .map(function (result) { return ({
+                    score: 1,
+                    action: function () {
+                        _this.setPromptKey(input, undefined);
+                        return rule.action(input, result.args);
+                    }
+                }); });
+            });
+        };
     };
     Prompt.prototype.reply = function (promptKey) {
         return this.prompts[promptKey].creator;
@@ -11223,17 +11242,15 @@ var RE = (function () {
     }
     // Either call as re(intent, action) or test([intent, intent, ...], action)
     RE.prototype.rule = function (intents, action) {
-        return {
-            matcher: function (input) {
-                return rxjs_1.Observable.from(Rules_1.arrayize(intents))
-                    .map(function (regexp) { return regexp.exec(input.text); })
-                    .filter(function (groups) { return groups && groups[0] === input.text; })
-                    .take(1)
-                    .map(function (groups) { return ({ groups: groups }); })
-                    .do(function (args) { return console.log("RegEx result", args); });
-            },
-            action: action,
-            name: "REGEXP"
+        return function (input) {
+            return rxjs_1.Observable.from(Rules_1.arrayize(intents))
+                .map(function (regexp) { return regexp.exec(input.text); })
+                .filter(function (groups) { return groups && groups[0] === input.text; })
+                .take(1)
+                .map(function (groups) { return ({
+                score: 1,
+                action: function () { return action(input, { groups: groups }); }
+            }); });
         };
     };
     return RE;
