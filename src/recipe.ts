@@ -127,29 +127,27 @@ const store = createStore(
 
 const recipeBotChat = new ReduxChat(new UniversalChat(webChat.chatConnector), store, state => state.bot);
 
-import { doRule, Action, Queries, firstMatch, filter, Match } from 'prague';
-
-const reply = (text: string): Action<IChatInput> => (input) => input.reply(text);
+import { doRule, Action, Queries, firstMatch, filter, Match, reply } from 'prague';
 
 // Prompts
 
-import { Prompt } from 'prague';
+import { Prompts } from 'prague';
 
-const prompt = new Prompt<RecipeBotInput>(
+const prompts = new Prompts<RecipeBotInput>(
     (input) => input.data.userInConversation.promptKey,
     (input, promptKey) => input.store.dispatch<RecipeAction>({ type: 'Set_PromptKey', promptKey })
 );
 
 const cheeses = ['Cheddar', 'Wensleydale', 'Brie', 'Velveeta'];
 
-prompt.text('Favorite_Color', "What is your favorite color?", (input, args) =>
-    input.reply(args === "blue" ? "That is correct!" : "That is incorrect"));
+prompts.add('Favorite_Color', prompts.text("What is your favorite color?", (input, text) =>
+    input.reply(text === "blue" ? "That is correct!" : "That is incorrect")));
 
-prompt.choice('Favorite_Cheese', "What is your favorite cheese?", cheeses, (input, args) =>
-    input.reply(args === "Velveeta" ? "Ima let you finish but FYI that is not really cheese." : "Interesting."));
+prompts.add('Favorite_Cheese', prompts.choice("What is your favorite cheese?", cheeses, (input, choice) =>
+    input.reply(choice === "Velveeta" ? "Ima let you finish but FYI that is not really cheese." : "Interesting.")));
 
-prompt.confirm('Like_Cheese', "Do you like cheese?", (input, args) =>
-    input.reply(args ? "That is correct." : "That is incorrect."));
+prompts.add('Like_Cheese', prompts.confirm("Do you like cheese?", (input, confirm) =>
+    input.reply(confirm ? "That is correct." : "That is incorrect.")));
 
 // Intents
 
@@ -248,13 +246,13 @@ const luis = new LUIS<RecipeBotInput>('id', 'key', .5);
 const recipeRule = firstMatch<RecipeBotInput>(
 
     // Prompts
-    prompt.rule(),
+    prompts.rule(),
 
     // For testing Prompts
     firstMatch(
-        re.rule(intents.askQuestion, prompt.reply('Favorite_Color')),
-        re.rule(intents.askYorNQuestion, prompt.reply('Like_Cheese')),
-        re.rule(intents.askChoiceQuestion, prompt.reply('Favorite_Cheese'))
+        re.rule(intents.askQuestion, prompts.reply('Favorite_Color')),
+        re.rule(intents.askYorNQuestion, prompts.reply('Like_Cheese')),
+        re.rule(intents.askChoiceQuestion, prompts.reply('Favorite_Cheese'))
     ),
 
     // For testing LUIS
