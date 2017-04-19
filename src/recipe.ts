@@ -57,7 +57,7 @@ interface RecipeState {
     promptKey: string
 }
 
-import { ChatState, ReduxChat, ReduxChatInput } from 'prague';
+import { ChatState, ReduxChat, IReduxChatInput } from 'prague';
 
 type RecipeBotData = ChatState<undefined, undefined, undefined, undefined, RecipeState>;
 
@@ -65,7 +65,7 @@ interface AppState {
     bot: RecipeBotData;
 }
 
-type RecipeBotInput = ReduxChatInput<AppState, RecipeBotData>;
+type RecipeBotInput = IReduxChatInput<AppState, RecipeBotData>;
 
 type RecipeAction = {
     type: 'Set_Recipe',
@@ -241,13 +241,9 @@ const re = new RE<RecipeBotInput>();
 
 // LUIS
 
-import { LUIS } from 'prague';
+import { LUIS, LuisEntity } from 'prague';
 
-const luis = new LUIS<RecipeBotInput>({
-    name: 'testModel',
-    id: 'id',
-    key: 'key'
-});
+const luis = new LUIS<RecipeBotInput>('id', 'key', .5);
 
 const recipeRule = firstMatch<RecipeBotInput>(
 
@@ -263,10 +259,10 @@ const recipeRule = firstMatch<RecipeBotInput>(
 
     // For testing LUIS
 
-    luis.bestMatch('testModel', [
-        luis.intent('singASong', (input, args) => input.reply(`Let's sing ${args.song}`)),
-        luis.intent('findSomething', (input, args) => input.reply(`Okay let's find a ${args.what} in ${args.where}`))
-    ]),
+    luis.bestMatch(
+        luis.intent('singASong', (input, args) => input.reply(`Let's sing ${luis.entityValue(args, 'song')}`)),
+        luis.intent('findSomething', (input, args) => input.reply(`Okay let's find a ${luis.entityValue(args, 'what')} in ${luis.entityValue(args, 'where')}`))
+    ),
 
     // If there is no recipe, we have to pick one
     filter(queries.noRecipe, firstMatch(

@@ -74,7 +74,7 @@
 
 var root_1 = __webpack_require__(7);
 var toSubscriber_1 = __webpack_require__(413);
-var observable_1 = __webpack_require__(26);
+var observable_1 = __webpack_require__(27);
 /**
  * A representation of any set of values over any amount of time. This the most basic building block
  * of RxJS.
@@ -225,10 +225,10 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var isFunction_1 = __webpack_require__(32);
+var isFunction_1 = __webpack_require__(33);
 var Subscription_1 = __webpack_require__(4);
 var Observer_1 = __webpack_require__(58);
-var rxSubscriber_1 = __webpack_require__(27);
+var rxSubscriber_1 = __webpack_require__(28);
 /**
  * Implements the {@link Observer} interface and extends the
  * {@link Subscription} class. While the {@link Observer} is the public API for
@@ -531,7 +531,7 @@ var isObject_1 = __webpack_require__(100);
 var Observable_1 = __webpack_require__(0);
 var iterator_1 = __webpack_require__(22);
 var InnerSubscriber_1 = __webpack_require__(157);
-var observable_1 = __webpack_require__(26);
+var observable_1 = __webpack_require__(27);
 function subscribeToResult(outerSubscriber, result, outerValue, outerIndex) {
     var destination = new InnerSubscriber_1.InnerSubscriber(outerSubscriber, outerValue, outerIndex);
     if (destination.closed) {
@@ -610,7 +610,7 @@ exports.subscribeToResult = subscribeToResult;
 
 var isArray_1 = __webpack_require__(12);
 var isObject_1 = __webpack_require__(100);
-var isFunction_1 = __webpack_require__(32);
+var isFunction_1 = __webpack_require__(33);
 var tryCatch_1 = __webpack_require__(8);
 var errorObject_1 = __webpack_require__(6);
 var UnsubscriptionError_1 = __webpack_require__(97);
@@ -815,9 +815,9 @@ var __extends = (this && this.__extends) || function (d, b) {
 var Observable_1 = __webpack_require__(0);
 var Subscriber_1 = __webpack_require__(1);
 var Subscription_1 = __webpack_require__(4);
-var ObjectUnsubscribedError_1 = __webpack_require__(30);
+var ObjectUnsubscribedError_1 = __webpack_require__(31);
 var SubjectSubscription_1 = __webpack_require__(59);
-var rxSubscriber_1 = __webpack_require__(27);
+var rxSubscriber_1 = __webpack_require__(28);
 /**
  * @class SubjectSubscriber<T>
  */
@@ -1095,18 +1095,17 @@ function __export(m) {
     for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
 }
 Object.defineProperty(exports, "__esModule", { value: true });
+// Core
+__export(__webpack_require__(24));
 // Rules
-__export(__webpack_require__(36));
-// Matchers
-__export(__webpack_require__(150));
-__export(__webpack_require__(153));
 __export(__webpack_require__(151));
+__export(__webpack_require__(153));
+__export(__webpack_require__(152));
 // Chat Connectors
-__export(__webpack_require__(54));
 __export(__webpack_require__(149));
 __export(__webpack_require__(148));
-// Input Providers
-__export(__webpack_require__(152));
+__export(__webpack_require__(54));
+__export(__webpack_require__(150));
 
 
 /***/ }),
@@ -1497,7 +1496,7 @@ var Subscription_1 = __webpack_require__(4);
 exports.Subscription = Subscription_1.Subscription;
 var Subscriber_1 = __webpack_require__(1);
 exports.Subscriber = Subscriber_1.Subscriber;
-var AsyncSubject_1 = __webpack_require__(24);
+var AsyncSubject_1 = __webpack_require__(25);
 exports.AsyncSubject = AsyncSubject_1.AsyncSubject;
 var ReplaySubject_1 = __webpack_require__(39);
 exports.ReplaySubject = ReplaySubject_1.ReplaySubject;
@@ -1507,11 +1506,11 @@ var ConnectableObservable_1 = __webpack_require__(77);
 exports.ConnectableObservable = ConnectableObservable_1.ConnectableObservable;
 var Notification_1 = __webpack_require__(19);
 exports.Notification = Notification_1.Notification;
-var EmptyError_1 = __webpack_require__(29);
+var EmptyError_1 = __webpack_require__(30);
 exports.EmptyError = EmptyError_1.EmptyError;
-var ArgumentOutOfRangeError_1 = __webpack_require__(28);
+var ArgumentOutOfRangeError_1 = __webpack_require__(29);
 exports.ArgumentOutOfRangeError = ArgumentOutOfRangeError_1.ArgumentOutOfRangeError;
-var ObjectUnsubscribedError_1 = __webpack_require__(30);
+var ObjectUnsubscribedError_1 = __webpack_require__(31);
 exports.ObjectUnsubscribedError = ObjectUnsubscribedError_1.ObjectUnsubscribedError;
 var TimeoutError_1 = __webpack_require__(96);
 exports.TimeoutError = TimeoutError_1.TimeoutError;
@@ -1533,9 +1532,9 @@ var asap_1 = __webpack_require__(92);
 var async_1 = __webpack_require__(9);
 var queue_1 = __webpack_require__(93);
 var animationFrame_1 = __webpack_require__(401);
-var rxSubscriber_1 = __webpack_require__(27);
+var rxSubscriber_1 = __webpack_require__(28);
 var iterator_1 = __webpack_require__(22);
-var observable_1 = __webpack_require__(26);
+var observable_1 = __webpack_require__(27);
 /* tslint:enable:no-unused-variable */
 /**
  * @typedef {Object} Rx.Scheduler
@@ -2091,7 +2090,7 @@ exports.$$iterator = exports.iterator;
  * Copyright 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
  * Available under MIT license <http://lodash.com/license>
  */
-var objectTypes = __webpack_require__(34);
+var objectTypes = __webpack_require__(35);
 
 /**
  * Checks if `value` is the language type of Object.
@@ -2126,6 +2125,84 @@ module.exports = isObject;
 
 /***/ }),
 /* 24 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var rxjs_1 = __webpack_require__(15);
+// export const defaultRule = <S>(action: Action<S>): Rule<S> => (input: S) => action(input);
+exports.arrayize = function (stuff) { return Array.isArray(stuff) ? stuff : [stuff]; };
+exports.observize = function (t) {
+    if (t instanceof rxjs_1.Observable)
+        return t;
+    if (t instanceof Promise)
+        return rxjs_1.Observable.fromPromise(t);
+    if (t === undefined || t === null)
+        return rxjs_1.Observable.empty();
+    return rxjs_1.Observable.of(t);
+};
+exports.composeRule = function (rule) { return function (input) {
+    return exports.observize(rule(input))
+        .flatMap(function (match) { return exports.observize(match.action()); });
+}; };
+// export const rule = <S>(matcher: Matcher<S>, action: Action<S>): Rule<S> => (input) => 
+//     observize(matcher(input))
+//     .do(result => console.log("matcher result", result))
+//     .map(args => ({
+//         score: args.score,
+//         action: () => {
+//             console.log(`resolving action`);
+//             return observize(action(input, args))
+//             .do(result => console.log("action result", result))
+//             .take(1) // because actions may emit more than one value
+//         }
+//     } as Match));
+exports.doRule = function (input, rule) {
+    return exports.observize(rule(input))
+        .flatMap(function (match) { return exports.observize(match.action()); });
+};
+exports.firstMatch$ = function (rule$) { return function (input) {
+    return rule$
+        .do(function (_) { return console.log("firstMatch: trying rule"); })
+        .switchMap(function (rule) { return exports.observize(rule(input)); })
+        .take(1);
+}; }; // so that we don't keep going through rules
+exports.firstMatch = function () {
+    var rules = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        rules[_i] = arguments[_i];
+    }
+    return function (input) {
+        return exports.firstMatch$(rxjs_1.Observable.from(rules))(input);
+    };
+};
+exports.bestMatch$ = function (rule$) { return function (input) {
+    return rule$
+        .do(function (_) { return console.log("bestMatch$: trying rule"); })
+        .flatMap(function (rule) { return exports.observize(rule(input)); })
+        .takeWhile(function (match) { return match.score < 1; })
+        .reduce(function (prev, current) { return prev && Math.max(prev.score || 1, 1) > Math.max(current.score || 1, 1) ? prev : current; });
+}; };
+// TODO: don't call reduce if current.score >= 1
+exports.bestMatch = function () {
+    var rules = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        rules[_i] = arguments[_i];
+    }
+    return function (input) {
+        return exports.bestMatch$(rxjs_1.Observable.from(rules))(input);
+    };
+};
+exports.filter = function (query, rule) { return function (input) {
+    return exports.observize(query(input))
+        .filter(function (result) { return !!result; })
+        .flatMap(function (_) { return exports.observize(rule(input)); });
+}; };
+
+
+/***/ }),
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2184,7 +2261,7 @@ exports.AsyncSubject = AsyncSubject;
 
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2301,7 +2378,7 @@ exports.MergeAllSubscriber = MergeAllSubscriber;
 
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2333,7 +2410,7 @@ exports.$$observable = exports.observable;
 
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2349,7 +2426,7 @@ exports.$$rxSubscriber = exports.rxSubscriber;
 
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2383,7 +2460,7 @@ exports.ArgumentOutOfRangeError = ArgumentOutOfRangeError;
 
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2417,7 +2494,7 @@ exports.EmptyError = EmptyError;
 
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2450,7 +2527,7 @@ exports.ObjectUnsubscribedError = ObjectUnsubscribedError;
 
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2462,7 +2539,7 @@ exports.isDate = isDate;
 
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2474,7 +2551,7 @@ exports.isFunction = isFunction;
 
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2492,7 +2569,7 @@ exports.isNumeric = isNumeric;
 
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, exports) {
 
 /**
@@ -2518,7 +2595,7 @@ module.exports = objectTypes;
 
 
 /***/ }),
-/* 35 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -2564,80 +2641,6 @@ var setBindData = !defineProperty ? noop : function(func, value) {
 };
 
 module.exports = setBindData;
-
-
-/***/ }),
-/* 36 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var rxjs_1 = __webpack_require__(15);
-// export const defaultRule = <S>(action: Action<S>): Rule<S> => (input: S) => action(input);
-exports.arrayize = function (stuff) { return Array.isArray(stuff) ? stuff : [stuff]; };
-exports.observize = function (t) {
-    if (t instanceof rxjs_1.Observable)
-        return t;
-    if (t instanceof Promise)
-        return rxjs_1.Observable.fromPromise(t);
-    return rxjs_1.Observable.of(t);
-};
-exports.rule = function (matcher, action) { return function (input) {
-    return exports.observize(matcher(input))
-        .do(function (result) { return console.log("matcher result", result); })
-        .filter(function (result) { return result !== undefined && result !== null; })
-        .map(function (args) { return ({
-        score: args.score,
-        action: function () {
-            console.log("resolving action");
-            return exports.observize(action(input, args))
-                .do(function (result) { return console.log("action result", result); })
-                .take(1); // because actions may emit more than one value
-        }
-    }); });
-}; };
-exports.doRule = function (input, rule) {
-    return exports.observize(rule(input))
-        .flatMap(function (match) { return exports.observize(match.action()); });
-};
-exports.firstMatch$ = function (rule$) { return function (input) {
-    return rule$
-        .do(function (_) { return console.log("firstMatch: trying rule"); })
-        .switchMap(function (rule) { return exports.observize(rule(input)); })
-        .take(1);
-}; }; // so that we don't keep going through rules
-exports.firstMatch = function () {
-    var rules = [];
-    for (var _i = 0; _i < arguments.length; _i++) {
-        rules[_i] = arguments[_i];
-    }
-    return function (input) {
-        return exports.firstMatch$(rxjs_1.Observable.from(rules))(input);
-    };
-};
-exports.bestMatch$ = function (rule$) { return function (input) {
-    return rule$
-        .do(function (_) { return console.log("bestMatch$: trying rule"); })
-        .flatMap(function (rule) { return exports.observize(rule(input)); })
-        .takeWhile(function (match) { return match.score !== 1; })
-        .reduce(function (prev, current) { return prev && prev.score > current.score ? prev : current; });
-}; };
-// TODO: don't call reduce if current.score === 1
-exports.bestMatch = function () {
-    var rules = [];
-    for (var _i = 0; _i < arguments.length; _i++) {
-        rules[_i] = arguments[_i];
-    }
-    return function (input) {
-        return exports.bestMatch$(rxjs_1.Observable.from(rules))(input);
-    };
-};
-exports.filter = function (query, rule) { return function (input) {
-    return exports.observize(query(input))
-        .filter(function (result) { return !!result; })
-        .flatMap(function (_) { return exports.observize(rule(input)); });
-}; };
 
 
 /***/ }),
@@ -2838,7 +2841,7 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var Subject_1 = __webpack_require__(5);
-var ObjectUnsubscribedError_1 = __webpack_require__(30);
+var ObjectUnsubscribedError_1 = __webpack_require__(31);
 /**
  * @class BehaviorSubject<T>
  */
@@ -2896,7 +2899,7 @@ var Subject_1 = __webpack_require__(5);
 var queue_1 = __webpack_require__(93);
 var Subscription_1 = __webpack_require__(4);
 var observeOn_1 = __webpack_require__(44);
-var ObjectUnsubscribedError_1 = __webpack_require__(30);
+var ObjectUnsubscribedError_1 = __webpack_require__(31);
 var SubjectSubscription_1 = __webpack_require__(59);
 /**
  * @class ReplaySubject<T>
@@ -3220,7 +3223,7 @@ exports.CombineLatestSubscriber = CombineLatestSubscriber;
 var Observable_1 = __webpack_require__(0);
 var isScheduler_1 = __webpack_require__(13);
 var ArrayObservable_1 = __webpack_require__(11);
-var mergeAll_1 = __webpack_require__(25);
+var mergeAll_1 = __webpack_require__(26);
 /* tslint:enable:max-line-length */
 /**
  * Creates an output Observable which sequentially emits all values from every
@@ -4132,7 +4135,7 @@ module.exports = baseCreate;
  */
 var bind = __webpack_require__(142),
     identity = __webpack_require__(145),
-    setBindData = __webpack_require__(35),
+    setBindData = __webpack_require__(36),
     support = __webpack_require__(147);
 
 /** Used to detected named functions */
@@ -5149,7 +5152,7 @@ var ArrayLikeObservable_1 = __webpack_require__(269);
 var iterator_1 = __webpack_require__(22);
 var Observable_1 = __webpack_require__(0);
 var observeOn_1 = __webpack_require__(44);
-var observable_1 = __webpack_require__(26);
+var observable_1 = __webpack_require__(27);
 /**
  * We need this JSDoc comment for affecting ESDoc.
  * @extends {Ignored}
@@ -6130,7 +6133,7 @@ exports.FindValueSubscriber = FindValueSubscriber;
 
 var Observable_1 = __webpack_require__(0);
 var ArrayObservable_1 = __webpack_require__(11);
-var mergeAll_1 = __webpack_require__(25);
+var mergeAll_1 = __webpack_require__(26);
 var isScheduler_1 = __webpack_require__(13);
 /* tslint:enable:max-line-length */
 /**
@@ -7739,21 +7742,14 @@ var intents = {
 var re = new prague_1.RE();
 // LUIS
 var prague_5 = __webpack_require__(10);
-var luis = new prague_5.LUIS({
-    name: 'testModel',
-    id: 'id',
-    key: 'key'
-});
+var luis = new prague_5.LUIS('id', 'key', .5);
 var recipeRule = prague_3.firstMatch(
 // Prompts
 prompt.rule(), 
 // For testing Prompts
 prague_3.firstMatch(re.rule(intents.askQuestion, prompt.reply('Favorite_Color')), re.rule(intents.askYorNQuestion, prompt.reply('Like_Cheese')), re.rule(intents.askChoiceQuestion, prompt.reply('Favorite_Cheese'))), 
 // For testing LUIS
-luis.bestMatch('testModel', [
-    luis.intent('singASong', function (input, args) { return input.reply("Let's sing " + args.song); }),
-    luis.intent('findSomething', function (input, args) { return input.reply("Okay let's find a " + args.what + " in " + args.where); })
-]), 
+luis.bestMatch(luis.intent('singASong', function (input, args) { return input.reply("Let's sing " + luis.entityValue(args, 'song')); }), luis.intent('findSomething', function (input, args) { return input.reply("Okay let's find a " + luis.entityValue(args, 'what') + " in " + luis.entityValue(args, 'where')); })), 
 // If there is no recipe, we have to pick one
 prague_3.filter(queries.noRecipe, prague_3.firstMatch(re.rule(intents.chooseRecipe, chooseRecipe), re.rule([intents.queryQuantity, intents.instructions.start, intents.instructions.restart], reply("First please choose a recipe")), re.rule(intents.all, chooseRecipe))), 
 // Now that we have a recipe, these can happen at any time
@@ -10315,7 +10311,7 @@ function isObjectLike(value) {
  */
 var baseCreate = __webpack_require__(49),
     isObject = __webpack_require__(23),
-    setBindData = __webpack_require__(35);
+    setBindData = __webpack_require__(36);
 
 /**
  * Used for `Array` method references.
@@ -10379,7 +10375,7 @@ module.exports = baseBind;
  */
 var baseCreate = __webpack_require__(49),
     isObject = __webpack_require__(23),
-    setBindData = __webpack_require__(35),
+    setBindData = __webpack_require__(36),
     slice = __webpack_require__(51);
 
 /**
@@ -10565,7 +10561,7 @@ module.exports = createWrapper;
  * Copyright 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
  * Available under MIT license <http://lodash.com/license>
  */
-var objectTypes = __webpack_require__(34);
+var objectTypes = __webpack_require__(35);
 
 /** Used for native method references */
 var objectProto = Object.prototype;
@@ -10719,7 +10715,7 @@ module.exports = forEach;
  */
 var baseCreateCallback = __webpack_require__(50),
     keys = __webpack_require__(52),
-    objectTypes = __webpack_require__(34);
+    objectTypes = __webpack_require__(35);
 
 /**
  * Iterates over own enumerable properties of an object, executing the callback
@@ -10948,125 +10944,35 @@ exports.WebChatConnector = WebChatConnector;
 
 "use strict";
 
-var __assign = (this && this.__assign) || Object.assign || function(t) {
-    for (var s, i = 1, n = arguments.length; i < n; i++) {
-        s = arguments[i];
-        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-            t[p] = s[p];
-    }
-    return t;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-var rxjs_1 = __webpack_require__(15);
-var LUIS = (function () {
-    function LUIS() {
-        var creds = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            creds[_i] = arguments[_i];
-        }
-        var _this = this;
-        this.models = {};
-        this.testData = {
-            "Wagon Wheel": [{
-                    intent: 'singASong',
-                    entities: {
-                        song: 'Wagon Wheel',
-                        genre: undefined,
-                    },
-                    score: .95,
-                }, {
-                    intent: 'findSomething',
-                    entities: {
-                        what: 'pub',
-                        where: 'London',
-                    },
-                    score: .30,
-                }, {
-                    intent: 'bestPerson',
-                    entities: {
-                        name: 'Bill Barnes',
-                    },
-                    score: .05,
-                }
-            ],
-            "Pubs in London": [{
-                    intent: 'findSomething',
-                    entities: {
-                        what: 'pub',
-                        where: 'London',
-                    },
-                    score: .75,
-                }, {
-                    intent: 'singASong',
-                    entities: {
-                        song: 'Wagon Wheel',
-                        genre: undefined,
-                    },
-                    score: .60,
-                }, {
-                    intent: 'bestPerson',
-                    entities: {
-                        name: 'Bill Barnes',
-                    },
-                    score: .05,
-                }
-            ]
-        };
-        creds.forEach(function (cred) { return _this.addModel(cred); });
+var Chat_1 = __webpack_require__(54);
+var ReduxChat = (function () {
+    function ReduxChat(chat, store, getBotData) {
+        this.input$ = chat.activity$
+            .filter(function (activity) { return activity.type === 'message'; })
+            .map(function (message) {
+            var address = Chat_1.getAddress(message);
+            var state = store.getState();
+            return {
+                // ITextInput
+                text: message.text,
+                // IChatInput
+                message: message,
+                address: address,
+                reply: function (activity) { return chat.send(address, activity); },
+                replyAsync: function (activity) { return chat.sendAsync(address, activity); },
+                // IStateInput
+                data: getBotData(state),
+                // IReduxInput
+                store: store,
+                state: state,
+                getBotData: getBotData,
+            };
+        });
     }
-    LUIS.prototype.addModel = function (creds) {
-        this.models[creds.name] = __assign({}, creds, { results: {} });
-    };
-    // a mock because I don't really care about really calling LUIS yet
-    LUIS.prototype.call = function (modelName, utterance) {
-        var model = this.models[modelName];
-        if (!model) {
-            console.error("no LUIS model with name " + modelName + " - provide with constructor or call addModel");
-            return rxjs_1.Observable.empty();
-        }
-        var result = model.results[utterance];
-        if (!result) {
-            result = this.testData[utterance];
-            if (!result)
-                return rxjs_1.Observable.empty();
-            model.results[utterance] = result;
-        }
-        return rxjs_1.Observable.of(result);
-    };
-    LUIS.prototype.intent = function (intent, action) {
-        return {
-            intent: intent,
-            action: action
-        };
-    };
-    // "classic" LUIS usage - for a given model, say what to do with each intent above a given threshold
-    // IMPORTANT: the order of rules is not important - the action for the *highest-ranked intent* will be executed
-    LUIS.prototype.bestMatch = function (modelName, luisRules, threshold) {
-        var _this = this;
-        if (threshold === void 0) { threshold = .50; }
-        return function (input) {
-            return _this.call(modelName, input.text)
-                .flatMap(function (luisResult) {
-                return rxjs_1.Observable.from(luisResult)
-                    .do(function (luisMatch) { return console.log("luisMatch", luisMatch); })
-                    .filter(function (luisMatch) { return luisMatch.score >= threshold; })
-                    .flatMap(function (luisMatch) {
-                    return rxjs_1.Observable.of(luisRules.find(function (luisRule) { return luisRule.intent === luisMatch.intent; }))
-                        .filter(function (luisRule) { return !!luisRule; })
-                        .do(function (_) { return console.log("filtered luisMatch", luisMatch); })
-                        .map(function (luisRule) { return ({
-                        score: luisMatch.score,
-                        action: function () { return luisRule.action(input, luisMatch.entities); }
-                    }); });
-                })
-                    .take(1);
-            } // LUIS returns results ordered by best match, we return the first in our list over our threshold
-            );
-        };
-    };
-    return LUIS;
+    return ReduxChat;
 }());
-exports.LUIS = LUIS;
+exports.ReduxChat = ReduxChat;
 
 
 /***/ }),
@@ -11076,7 +10982,162 @@ exports.LUIS = LUIS;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var Rules_1 = __webpack_require__(36);
+var rxjs_1 = __webpack_require__(15);
+var Rules_1 = __webpack_require__(24);
+var LUIS = (function () {
+    function LUIS(id, key, scoreThreshold) {
+        if (scoreThreshold === void 0) { scoreThreshold = 0.5; }
+        this.id = id;
+        this.key = key;
+        this.scoreThreshold = scoreThreshold;
+        this.cache = {};
+        this.testData = {
+            "Wagon Wheel": {
+                query: "Wagon Wheel",
+                topScoringIntent: {
+                    intent: 'singASong',
+                    score: .95,
+                },
+                intents: [{
+                        intent: 'singASong',
+                        score: .95,
+                    }, {
+                        intent: 'findSomething',
+                        score: .30,
+                    }, {
+                        intent: 'bestPerson',
+                        score: .05
+                    }],
+                entities: [{
+                        entity: 'Wagon Wheel',
+                        type: "song",
+                        startIndex: 0,
+                        endIndex: 11,
+                        score: .95
+                    }, {
+                        entity: 'Pub',
+                        type: "what",
+                        startIndex: 0,
+                        endIndex: 3,
+                        score: .89
+                    }, {
+                        entity: 'London',
+                        type: "where",
+                        startIndex: 0,
+                        endIndex: 6,
+                        score: .72
+                    }]
+            },
+            "Pubs in London": {
+                query: "Pubs in London",
+                topScoringIntent: {
+                    intent: 'findSomething',
+                    score: .30,
+                },
+                intents: [{
+                        intent: 'findSomething',
+                        score: .90,
+                    }, {
+                        intent: 'singASong',
+                        score: .51,
+                    }, {
+                        intent: 'bestPerson',
+                        score: .05
+                    }],
+                entities: [{
+                        entity: 'Pub',
+                        type: "what",
+                        startIndex: 0,
+                        endIndex: 3,
+                        score: .89
+                    }, {
+                        entity: 'London',
+                        type: "where",
+                        startIndex: 0,
+                        endIndex: 6,
+                        score: .72
+                    }, {
+                        entity: 'Wagon Wheel',
+                        type: "song",
+                        startIndex: 0,
+                        endIndex: 11,
+                        score: .35
+                    }]
+            }
+        };
+    }
+    // a mock because I don't really care about really calling LUIS yet
+    LUIS.prototype.call = function (utterance) {
+        var response = this.cache[utterance];
+        if (!response) {
+            response = this.testData[utterance]; // this emulates the call
+            if (!response)
+                return rxjs_1.Observable.empty();
+            this.cache[utterance] = response;
+        }
+        return rxjs_1.Observable.of(response);
+    };
+    LUIS.prototype.intent = function (intent, action) {
+        return {
+            intent: intent,
+            action: action
+        };
+    };
+    LUIS.prototype.rule = function (action) {
+        var _this = this;
+        return function (input) {
+            return _this.call(input.text)
+                .map(function (luisResponse) { return ({
+                score: luisResponse.topScoringIntent.score,
+                action: function () { return action(input, luisResponse); }
+            }); });
+        };
+    };
+    // "classic" LUIS usage - for a given model, say what to do with each intent above a given threshold
+    // IMPORTANT: the order of rules is not important - the action for the *highest-ranked intent* will be executed
+    LUIS.prototype.bestMatch = function () {
+        var _this = this;
+        var luisRules = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            luisRules[_i] = arguments[_i];
+        }
+        return Rules_1.composeRule(this.rule(function (input, luisResponse) {
+            return rxjs_1.Observable.from(luisResponse.intents)
+                .do(function (intent) { return console.log("intent", intent); })
+                .filter(function (intent) { return intent.score >= _this.scoreThreshold; })
+                .flatMap(function (intent) {
+                return rxjs_1.Observable.of(luisRules.find(function (luisRule) { return luisRule.intent === intent.intent; }))
+                    .filter(function (luisRule) { return !!luisRule; })
+                    .do(function (_) { return console.log("filtered intent", intent); })
+                    .map(function (luisRule) { return ({
+                    score: intent.score,
+                    action: function () { return luisRule.action(input, luisResponse.entities); }
+                }); });
+            })
+                .take(1);
+        } // LUIS returns results ordered by best match, we return the first in our list over our threshold
+        ));
+    };
+    LUIS.prototype.findEntity = function (entities, type) {
+        return entities.find(function (entity) { return entity.type === type; });
+    };
+    LUIS.prototype.entityValue = function (entities, type) {
+        var entity = this.findEntity(entities, type);
+        return entity && entity.entity;
+    };
+    return LUIS;
+}());
+exports.LUIS = LUIS;
+
+
+/***/ }),
+/* 152 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var Rules_1 = __webpack_require__(24);
 var rxjs_1 = __webpack_require__(15);
 var Prompt = (function () {
     function Prompt(getPromptKey, setPromptKey) {
@@ -11095,11 +11156,9 @@ var Prompt = (function () {
     Prompt.prototype.text = function (promptKey, text, action) {
         var _this = this;
         this.add(promptKey, {
-            matcher: function (input) { return ({
-                score: 1,
-                args: input.text
+            rule: function (input) { return ({
+                action: function () { return action(input, input.text); }
             }); },
-            action: action,
             creator: function (input) {
                 _this.setPromptKey(input, promptKey);
                 input.reply(text);
@@ -11109,14 +11168,13 @@ var Prompt = (function () {
     Prompt.prototype.choicePrompt = function (promptKey, text, choices, action) {
         var _this = this;
         return {
-            matcher: function (input) {
-                var choice = choices.find(function (choice) { return choice.toLowerCase() === input.text.toLowerCase(); });
-                return choice && {
-                    score: 1,
-                    args: choice
-                };
+            rule: function (input) {
+                return rxjs_1.Observable.of(choices.find(function (choice) { return choice.toLowerCase() === input.text.toLowerCase(); }))
+                    .filter(function (choice) { return choice !== undefined && choice != null; })
+                    .map(function (choice) { return ({
+                    action: function () { return action(input, choice); }
+                }); });
             },
-            action: action,
             creator: function (input) {
                 _this.setPromptKey(input, promptKey);
                 input.reply({
@@ -11136,18 +11194,15 @@ var Prompt = (function () {
         this.add(promptKey, this.choicePrompt(promptKey, text, choices, action));
     };
     Prompt.prototype.confirm = function (promptKey, text, action) {
-        var choice = this.choicePrompt(promptKey, text, ['Yes', 'No'], null);
+        var choice = this.choicePrompt(promptKey, text, ['Yes', 'No'], function (input, choice) {
+            return rxjs_1.Observable.of(choice)
+                .map(function (choice) { return ({
+                action: function () { return action(input, choice === 'Yes'); }
+            }); });
+        });
         this.add(promptKey, {
             creator: choice.creator,
-            action: action,
-            matcher: function (input) {
-                return Rules_1.observize(choice.matcher(input))
-                    .filter(function (args) { return args !== undefined && args !== null; })
-                    .map(function (args) { return ({
-                    score: 1,
-                    args: args.args === 'Yes',
-                }); });
-            }
+            rule: Rules_1.composeRule(choice.rule)
         });
     };
     Prompt.prototype.rule = function () {
@@ -11157,15 +11212,13 @@ var Prompt = (function () {
             return rxjs_1.Observable.of(_this.getPromptKey(input))
                 .filter(function (promptKey) { return promptKey !== undefined; })
                 .map(function (promptKey) { return _this.prompts[promptKey]; })
-                .filter(function (rule) { return rule !== undefined; })
-                .flatMap(function (rule) {
-                return Rules_1.observize(rule.matcher(input))
-                    .filter(function (result) { return result !== undefined && result !== null; })
-                    .map(function (result) { return ({
-                    score: 1,
+                .filter(function (ps) { return ps !== undefined; })
+                .flatMap(function (ps) {
+                return Rules_1.observize(ps.rule(input))
+                    .map(function (match) { return ({
                     action: function () {
                         _this.setPromptKey(input, undefined);
-                        return rule.action(input, result.args);
+                        return match.action();
                     }
                 }); });
             });
@@ -11180,49 +11233,6 @@ exports.Prompt = Prompt;
 
 
 /***/ }),
-/* 152 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var Chat_1 = __webpack_require__(54);
-var ReduxChatInput = (function () {
-    function ReduxChatInput(message, chat, store, getBotData) {
-        this.message = message;
-        this.chat = chat;
-        this.store = store;
-        this.getBotData = getBotData;
-        this.address = Chat_1.getAddress(message);
-        this.state = store.getState();
-        this.text = message.text;
-        this.data = getBotData(this.state);
-    }
-    ReduxChatInput.prototype.reply = function (activity) {
-        this.chat.send(this.address, activity);
-    };
-    ReduxChatInput.prototype.replyAsync = function (activity) {
-        return this.chat.sendAsync(this.address, activity);
-    };
-    return ReduxChatInput;
-}());
-exports.ReduxChatInput = ReduxChatInput;
-var ReduxChat = (function () {
-    function ReduxChat(chat, store, getBotData) {
-        var _this = this;
-        this.chat = chat;
-        this.store = store;
-        this.getBotData = getBotData;
-        this.input$ = chat.activity$
-            .filter(function (activity) { return activity.type === 'message'; })
-            .map(function (message) { return new ReduxChatInput(message, _this.chat, _this.store, _this.getBotData); });
-    }
-    return ReduxChat;
-}());
-exports.ReduxChat = ReduxChat;
-
-
-/***/ }),
 /* 153 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -11230,7 +11240,7 @@ exports.ReduxChat = ReduxChat;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var rxjs_1 = __webpack_require__(15);
-var Rules_1 = __webpack_require__(36);
+var Rules_1 = __webpack_require__(24);
 var RE = (function () {
     function RE() {
     }
@@ -11242,7 +11252,6 @@ var RE = (function () {
                 .filter(function (groups) { return groups && groups[0] === input.text; })
                 .take(1)
                 .map(function (groups) { return ({
-                score: 1,
                 action: function () { return action(input, { groups: groups }); }
             }); });
         };
@@ -12257,7 +12266,7 @@ Observable_1.Observable.prototype.merge = merge_1.merge;
 "use strict";
 
 var Observable_1 = __webpack_require__(0);
-var mergeAll_1 = __webpack_require__(25);
+var mergeAll_1 = __webpack_require__(26);
 Observable_1.Observable.prototype.mergeAll = mergeAll_1.mergeAll;
 
 
@@ -12903,7 +12912,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 var Observable_1 = __webpack_require__(0);
 var tryCatch_1 = __webpack_require__(8);
 var errorObject_1 = __webpack_require__(6);
-var AsyncSubject_1 = __webpack_require__(24);
+var AsyncSubject_1 = __webpack_require__(25);
 /**
  * We need this JSDoc comment for affecting ESDoc.
  * @extends {Ignored}
@@ -13177,7 +13186,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 var Observable_1 = __webpack_require__(0);
 var tryCatch_1 = __webpack_require__(8);
 var errorObject_1 = __webpack_require__(6);
-var AsyncSubject_1 = __webpack_require__(24);
+var AsyncSubject_1 = __webpack_require__(25);
 /**
  * We need this JSDoc comment for affecting ESDoc.
  * @extends {Ignored}
@@ -13756,7 +13765,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var Observable_1 = __webpack_require__(0);
 var tryCatch_1 = __webpack_require__(8);
-var isFunction_1 = __webpack_require__(32);
+var isFunction_1 = __webpack_require__(33);
 var errorObject_1 = __webpack_require__(6);
 var Subscription_1 = __webpack_require__(4);
 var toString = Object.prototype.toString;
@@ -13900,7 +13909,7 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var isFunction_1 = __webpack_require__(32);
+var isFunction_1 = __webpack_require__(33);
 var Observable_1 = __webpack_require__(0);
 var Subscription_1 = __webpack_require__(4);
 /**
@@ -14227,7 +14236,7 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var isNumeric_1 = __webpack_require__(33);
+var isNumeric_1 = __webpack_require__(34);
 var Observable_1 = __webpack_require__(0);
 var async_1 = __webpack_require__(9);
 /**
@@ -14750,7 +14759,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var Observable_1 = __webpack_require__(0);
 var asap_1 = __webpack_require__(92);
-var isNumeric_1 = __webpack_require__(33);
+var isNumeric_1 = __webpack_require__(34);
 /**
  * We need this JSDoc comment for affecting ESDoc.
  * @extends {Ignored}
@@ -14805,11 +14814,11 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var isNumeric_1 = __webpack_require__(33);
+var isNumeric_1 = __webpack_require__(34);
 var Observable_1 = __webpack_require__(0);
 var async_1 = __webpack_require__(9);
 var isScheduler_1 = __webpack_require__(13);
-var isDate_1 = __webpack_require__(31);
+var isDate_1 = __webpack_require__(32);
 /**
  * We need this JSDoc comment for affecting ESDoc.
  * @extends {Ignored}
@@ -16728,7 +16737,7 @@ exports.combineAll = combineAll;
 
 "use strict";
 
-var mergeAll_1 = __webpack_require__(25);
+var mergeAll_1 = __webpack_require__(26);
 /* tslint:enable:max-line-length */
 /**
  * Converts a higher-order Observable into a first-order Observable by
@@ -17397,7 +17406,7 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var async_1 = __webpack_require__(9);
-var isDate_1 = __webpack_require__(31);
+var isDate_1 = __webpack_require__(32);
 var Subscriber_1 = __webpack_require__(1);
 var Notification_1 = __webpack_require__(19);
 /**
@@ -18136,7 +18145,7 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var Subscriber_1 = __webpack_require__(1);
-var ArgumentOutOfRangeError_1 = __webpack_require__(28);
+var ArgumentOutOfRangeError_1 = __webpack_require__(29);
 /**
  * Emits the single value at the specified `index` in a sequence of emissions
  * from the source Observable.
@@ -18814,7 +18823,7 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var Subscriber_1 = __webpack_require__(1);
-var EmptyError_1 = __webpack_require__(29);
+var EmptyError_1 = __webpack_require__(30);
 /**
  * Emits only the first value (or the first value that meets some condition)
  * emitted by the source Observable.
@@ -19370,7 +19379,7 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var Subscriber_1 = __webpack_require__(1);
-var EmptyError_1 = __webpack_require__(29);
+var EmptyError_1 = __webpack_require__(30);
 /* tslint:enable:max-line-length */
 /**
  * Returns an Observable that emits only the last item emitted by the source Observable.
@@ -20154,7 +20163,7 @@ exports.publishBehavior = publishBehavior;
 
 "use strict";
 
-var AsyncSubject_1 = __webpack_require__(24);
+var AsyncSubject_1 = __webpack_require__(25);
 var multicast_1 = __webpack_require__(16);
 /**
  * @return {ConnectableObservable<T>}
@@ -21087,7 +21096,7 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var Subscriber_1 = __webpack_require__(1);
-var EmptyError_1 = __webpack_require__(29);
+var EmptyError_1 = __webpack_require__(30);
 /**
  * Returns an Observable that emits the single item emitted by the source Observable that matches a specified
  * predicate, if that Observable emits one such item. If the source Observable emits more than one such item or no
@@ -21870,7 +21879,7 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var Subscriber_1 = __webpack_require__(1);
-var ArgumentOutOfRangeError_1 = __webpack_require__(28);
+var ArgumentOutOfRangeError_1 = __webpack_require__(29);
 var EmptyObservable_1 = __webpack_require__(14);
 /**
  * Emits only the first `count` values emitted by the source Observable.
@@ -21965,7 +21974,7 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var Subscriber_1 = __webpack_require__(1);
-var ArgumentOutOfRangeError_1 = __webpack_require__(28);
+var ArgumentOutOfRangeError_1 = __webpack_require__(29);
 var EmptyObservable_1 = __webpack_require__(14);
 /**
  * Emits only the last `count` values emitted by the source Observable.
@@ -22472,7 +22481,7 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var async_1 = __webpack_require__(9);
-var isDate_1 = __webpack_require__(31);
+var isDate_1 = __webpack_require__(32);
 var Subscriber_1 = __webpack_require__(1);
 var TimeoutError_1 = __webpack_require__(96);
 /**
@@ -22561,7 +22570,7 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var async_1 = __webpack_require__(9);
-var isDate_1 = __webpack_require__(31);
+var isDate_1 = __webpack_require__(32);
 var OuterSubscriber_1 = __webpack_require__(2);
 var subscribeToResult_1 = __webpack_require__(3);
 /* tslint:enable:max-line-length */
@@ -23038,7 +23047,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 var Subject_1 = __webpack_require__(5);
 var async_1 = __webpack_require__(9);
 var Subscriber_1 = __webpack_require__(1);
-var isNumeric_1 = __webpack_require__(33);
+var isNumeric_1 = __webpack_require__(34);
 var isScheduler_1 = __webpack_require__(13);
 function windowTime(windowTimeSpan) {
     var scheduler = async_1.async;
@@ -24828,7 +24837,7 @@ exports.not = not;
 "use strict";
 
 var Subscriber_1 = __webpack_require__(1);
-var rxSubscriber_1 = __webpack_require__(27);
+var rxSubscriber_1 = __webpack_require__(28);
 var Observer_1 = __webpack_require__(58);
 function toSubscriber(nextOrObserver, error, complete) {
     if (nextOrObserver) {
