@@ -608,7 +608,7 @@ exports.subscribeToResult = subscribeToResult;
 
 "use strict";
 
-var isArray_1 = __webpack_require__(11);
+var isArray_1 = __webpack_require__(12);
 var isObject_1 = __webpack_require__(100);
 var isFunction_1 = __webpack_require__(33);
 var tryCatch_1 = __webpack_require__(8);
@@ -1088,6 +1088,31 @@ exports.async = new AsyncScheduler_1.AsyncScheduler(AsyncAction_1.AsyncAction);
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
+// Eventually this libary might be factored into multiple libraries/plugins. Until then, this
+// file exists as an entry point to the entire thing.
+
+function __export(m) {
+    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
+}
+Object.defineProperty(exports, "__esModule", { value: true });
+// Core
+__export(__webpack_require__(24));
+// Rules
+__export(__webpack_require__(151));
+__export(__webpack_require__(153));
+__export(__webpack_require__(152));
+// Chat Connectors
+__export(__webpack_require__(149));
+__export(__webpack_require__(148));
+__export(__webpack_require__(54));
+__export(__webpack_require__(150));
+
+
+/***/ }),
+/* 11 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
 
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -1096,8 +1121,8 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var Observable_1 = __webpack_require__(0);
 var ScalarObservable_1 = __webpack_require__(40);
-var EmptyObservable_1 = __webpack_require__(13);
-var isScheduler_1 = __webpack_require__(12);
+var EmptyObservable_1 = __webpack_require__(14);
+var isScheduler_1 = __webpack_require__(13);
 /**
  * We need this JSDoc comment for affecting ESDoc.
  * @extends {Ignored}
@@ -1212,7 +1237,7 @@ exports.ArrayObservable = ArrayObservable;
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1221,7 +1246,7 @@ exports.isArray = Array.isArray || (function (x) { return x && typeof x.length =
 
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1233,7 +1258,7 @@ exports.isScheduler = isScheduler;
 
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1320,7 +1345,7 @@ exports.EmptyObservable = EmptyObservable;
 
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1550,31 +1575,6 @@ var Symbol = {
     iterator: iterator_1.iterator
 };
 exports.Symbol = Symbol;
-
-
-/***/ }),
-/* 15 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-// Eventually this libary might be factored into multiple libraries/plugins. Until then, this
-// file exists as an entry point to the entire thing.
-
-function __export(m) {
-    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
-}
-Object.defineProperty(exports, "__esModule", { value: true });
-// Core
-__export(__webpack_require__(24));
-// Rules
-__export(__webpack_require__(151));
-__export(__webpack_require__(153));
-__export(__webpack_require__(152));
-// Chat Connectors
-__export(__webpack_require__(149));
-__export(__webpack_require__(148));
-__export(__webpack_require__(54));
-__export(__webpack_require__(150));
 
 
 /***/ }),
@@ -2130,7 +2130,7 @@ module.exports = isObject;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var rxjs_1 = __webpack_require__(14);
+var rxjs_1 = __webpack_require__(15);
 exports.defaultRule = function (action) { return function (input) { return ({
     action: function () { return action(input); }
 }); }; };
@@ -2154,7 +2154,7 @@ exports.composeRule = function (rule) { return function (input) {
 exports.firstMatch$ = function (rule$) { return function (input) {
     return rule$
         .do(function (_) { return console.log("firstMatch: trying rule"); })
-        .switchMap(function (rule) { return exports.observize(rule(input)); })
+        .flatMap(function (rule) { return exports.observize(rule(input)); }, 1)
         .take(1);
 }; }; // so that we don't keep going through rules
 exports.firstMatch = function () {
@@ -2545,7 +2545,7 @@ exports.isFunction = isFunction;
 
 "use strict";
 
-var isArray_1 = __webpack_require__(11);
+var isArray_1 = __webpack_require__(12);
 function isNumeric(val) {
     // parseFloat NaNs numeric-cast false positives (null|true|false|"")
     // ...but misinterprets leading-number strings, particularly hex literals ("0x...")
@@ -3056,8 +3056,8 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var ArrayObservable_1 = __webpack_require__(10);
-var isArray_1 = __webpack_require__(11);
+var ArrayObservable_1 = __webpack_require__(11);
+var isArray_1 = __webpack_require__(12);
 var OuterSubscriber_1 = __webpack_require__(2);
 var subscribeToResult_1 = __webpack_require__(3);
 var none = {};
@@ -3210,8 +3210,8 @@ exports.CombineLatestSubscriber = CombineLatestSubscriber;
 "use strict";
 
 var Observable_1 = __webpack_require__(0);
-var isScheduler_1 = __webpack_require__(12);
-var ArrayObservable_1 = __webpack_require__(10);
+var isScheduler_1 = __webpack_require__(13);
+var ArrayObservable_1 = __webpack_require__(11);
 var mergeAll_1 = __webpack_require__(26);
 /* tslint:enable:max-line-length */
 /**
@@ -3701,8 +3701,8 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var ArrayObservable_1 = __webpack_require__(10);
-var isArray_1 = __webpack_require__(11);
+var ArrayObservable_1 = __webpack_require__(11);
+var isArray_1 = __webpack_require__(12);
 var Subscriber_1 = __webpack_require__(1);
 var OuterSubscriber_1 = __webpack_require__(2);
 var subscribeToResult_1 = __webpack_require__(3);
@@ -4330,7 +4330,7 @@ var __assign = (this && this.__assign) || Object.assign || function(t) {
     return t;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var rxjs_1 = __webpack_require__(14);
+var rxjs_1 = __webpack_require__(15);
 var UniversalChat = (function () {
     function UniversalChat() {
         var chats = [];
@@ -5132,12 +5132,12 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var isArray_1 = __webpack_require__(11);
+var isArray_1 = __webpack_require__(12);
 var isArrayLike_1 = __webpack_require__(99);
 var isPromise_1 = __webpack_require__(101);
 var PromiseObservable_1 = __webpack_require__(79);
 var IteratorObservable_1 = __webpack_require__(280);
-var ArrayObservable_1 = __webpack_require__(10);
+var ArrayObservable_1 = __webpack_require__(11);
 var ArrayLikeObservable_1 = __webpack_require__(269);
 var iterator_1 = __webpack_require__(22);
 var Observable_1 = __webpack_require__(0);
@@ -6122,9 +6122,9 @@ exports.FindValueSubscriber = FindValueSubscriber;
 "use strict";
 
 var Observable_1 = __webpack_require__(0);
-var ArrayObservable_1 = __webpack_require__(10);
+var ArrayObservable_1 = __webpack_require__(11);
 var mergeAll_1 = __webpack_require__(26);
-var isScheduler_1 = __webpack_require__(12);
+var isScheduler_1 = __webpack_require__(13);
 /* tslint:enable:max-line-length */
 /**
  * Creates an output Observable which concurrently emits all values from every
@@ -6616,7 +6616,7 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var FromObservable_1 = __webpack_require__(78);
-var isArray_1 = __webpack_require__(11);
+var isArray_1 = __webpack_require__(12);
 var OuterSubscriber_1 = __webpack_require__(2);
 var subscribeToResult_1 = __webpack_require__(3);
 /* tslint:enable:max-line-length */
@@ -6697,8 +6697,8 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var isArray_1 = __webpack_require__(11);
-var ArrayObservable_1 = __webpack_require__(10);
+var isArray_1 = __webpack_require__(12);
+var ArrayObservable_1 = __webpack_require__(11);
 var OuterSubscriber_1 = __webpack_require__(2);
 var subscribeToResult_1 = __webpack_require__(3);
 /* tslint:enable:max-line-length */
@@ -7609,13 +7609,13 @@ var recipes = recipes_1.recipesRaw;
 //convertIngredient("1lb cheese", "metric");
 //convertIngredient("10g cheese", "imperial");
 weightsAndMeasures_1.convertIngredient("10floz milk", "metric");
-var rxjs_1 = __webpack_require__(14);
-var prague_1 = __webpack_require__(15);
+var rxjs_1 = __webpack_require__(15);
+var prague_1 = __webpack_require__(10);
 var webChat = new prague_1.WebChatConnector();
 window["browserBot"] = webChat.botConnection;
 // setTimeout(() => chat.send("Let's get cooking!"), 1000);
 var redux_1 = __webpack_require__(107);
-var prague_2 = __webpack_require__(15);
+var prague_2 = __webpack_require__(10);
 var recipebot = function (state, action) {
     if (state === void 0) { state = {
         userInConversation: {
@@ -7642,9 +7642,9 @@ var store = redux_1.createStore(redux_1.combineReducers({
     bot: recipebot
 }));
 var recipeBotChat = new prague_2.ReduxChat(new prague_1.UniversalChat(webChat.chatConnector), store, function (state) { return state.bot; });
-var prague_3 = __webpack_require__(15);
+var prague_3 = __webpack_require__(10);
 // Prompts
-var prague_4 = __webpack_require__(15);
+var prague_4 = __webpack_require__(10);
 var prompts = new prague_4.Prompts(function (input) { return input.data.userInConversation.promptKey; }, function (input, promptKey) { return input.store.dispatch({ type: 'Set_PromptKey', promptKey: promptKey }); });
 var cheeses = ['Cheddar', 'Wensleydale', 'Brie', 'Velveeta'];
 prompts.add('Favorite_Color', prompts.text("What is your favorite color?", function (input, text) {
@@ -7730,7 +7730,7 @@ var intents = {
 };
 var re = new prague_1.RE();
 // LUIS
-var prague_5 = __webpack_require__(15);
+var prague_5 = __webpack_require__(10);
 var luis = new prague_5.LUIS('id', 'key', .5);
 var recipeRule = prague_3.firstMatch(
 // Prompts
@@ -7738,7 +7738,7 @@ prompts.rule(),
 // For testing Prompts
 prague_3.firstMatch(re.rule(intents.askQuestion, prompts.reply('Favorite_Color')), re.rule(intents.askYorNQuestion, prompts.reply('Like_Cheese')), re.rule(intents.askChoiceQuestion, prompts.reply('Favorite_Cheese'))), 
 // For testing LUIS
-luis.bestMatch(luis.intent('singASong', function (input, args) { return input.reply("Let's sing " + luis.entityValue(args, 'song')); }), luis.intent('findSomething', function (input, args) { return input.reply("Okay let's find a " + luis.entityValue(args, 'what') + " in " + luis.entityValue(args, 'where')); })), 
+luis.bestMatch(luis.intent('singASong', function (input, entities) { return input.reply("Let's sing " + luis.entityValues(entities, 'song')[0]); }), luis.intent('findSomething', function (input, entities) { return input.reply("Okay let's find a " + luis.entityValues(entities, 'what')[0] + " in " + luis.entityValues(entities, 'where')[0]); })), 
 // If there is no recipe, we have to pick one
 prague_3.filter(queries.noRecipe, prague_3.firstMatch(re.rule(intents.chooseRecipe, chooseRecipe), re.rule([intents.queryQuantity, intents.instructions.start, intents.instructions.restart], prague_3.reply("First please choose a recipe")), re.rule(intents.all, chooseRecipe))), 
 // Now that we have a recipe, these can happen at any time
@@ -10890,7 +10890,7 @@ var __assign = (this && this.__assign) || Object.assign || function(t) {
     return t;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var rxjs_1 = __webpack_require__(14);
+var rxjs_1 = __webpack_require__(15);
 var botframework_directlinejs_1 = __webpack_require__(109);
 var WebChatConnector = (function () {
     function WebChatConnector() {
@@ -10971,13 +10971,11 @@ exports.ReduxChat = ReduxChat;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var rxjs_1 = __webpack_require__(14);
+var rxjs_1 = __webpack_require__(15);
 var Rules_1 = __webpack_require__(24);
 var LUIS = (function () {
     function LUIS(id, key, scoreThreshold) {
         if (scoreThreshold === void 0) { scoreThreshold = 0.5; }
-        this.id = id;
-        this.key = key;
         this.scoreThreshold = scoreThreshold;
         this.cache = {};
         this.testData = {
@@ -11054,17 +11052,25 @@ var LUIS = (function () {
                     }]
             }
         };
+        this.url =
+            id === 'id' && key === 'key' ? 'testData' :
+                "https://westus.api.cognitive.microsoft.com/luis/v2.0/apps/" + id + "?subscription-key=" + key + "&q=";
     }
-    // a mock because I don't really care about really calling LUIS yet
     LUIS.prototype.call = function (utterance) {
-        var response = this.cache[utterance];
-        if (!response) {
-            response = this.testData[utterance]; // this emulates the call
-            if (!response)
-                return rxjs_1.Observable.empty();
-            this.cache[utterance] = response;
-        }
-        return rxjs_1.Observable.of(response);
+        var _this = this;
+        console.log("cache", this.cache);
+        console.log("utterance", utterance);
+        console.log("testData", this.testData);
+        return rxjs_1.Observable.of(this.cache[utterance])
+            .do(function (_) { return console.log("calling LUIS"); })
+            .flatMap(function (response) { return response
+            ? rxjs_1.Observable.of(response).do(function (_) { return console.log("from cache!!"); })
+            : (_this.url === 'testData'
+                ? rxjs_1.Observable.of(_this.testData[utterance])
+                : rxjs_1.Observable.ajax.get(_this.url + utterance)
+                    .do(function (ajaxResponse) { return console.log("LUIS response!", ajaxResponse); })
+                    .map(function (ajaxResponse) { return ajaxResponse.response; }))
+                .do(function (luisResponse) { return _this.cache[utterance] = luisResponse; }); });
     };
     LUIS.prototype.intent = function (intent, action) {
         return {
@@ -11077,7 +11083,7 @@ var LUIS = (function () {
         return function (input) {
             return _this.call(input.text)
                 .map(function (luisResponse) { return ({
-                score: luisResponse.topScoringIntent.score,
+                score: luisResponse.topScoringIntent && luisResponse.topScoringIntent.score,
                 action: function () { return action(input, luisResponse); }
             }); });
         };
@@ -11091,28 +11097,27 @@ var LUIS = (function () {
             luisRules[_i] = arguments[_i];
         }
         return Rules_1.composeRule(this.rule(function (input, luisResponse) {
-            return rxjs_1.Observable.from(luisResponse.intents)
-                .do(function (intent) { return console.log("intent", intent); })
+            return rxjs_1.Observable.from(luisResponse.intents || luisResponse.topScoringIntent && [luisResponse.topScoringIntent])
                 .filter(function (intent) { return intent.score >= _this.scoreThreshold; })
                 .flatMap(function (intent) {
                 return rxjs_1.Observable.of(luisRules.find(function (luisRule) { return luisRule.intent === intent.intent; }))
                     .filter(function (luisRule) { return !!luisRule; })
-                    .do(function (_) { return console.log("filtered intent", intent); })
                     .map(function (luisRule) { return ({
                     score: intent.score,
                     action: function () { return luisRule.action(input, luisResponse.entities); }
                 }); });
             })
                 .take(1);
-        } // LUIS returns results ordered by best match, we return the first in our list over our threshold
+        } // match the first intent from LUIS for which we supplied rule
         ));
     };
     LUIS.prototype.findEntity = function (entities, type) {
-        return entities.find(function (entity) { return entity.type === type; });
+        return entities
+            .filter(function (entity) { return entity.type === type; });
     };
-    LUIS.prototype.entityValue = function (entities, type) {
-        var entity = this.findEntity(entities, type);
-        return entity && entity.entity;
+    LUIS.prototype.entityValues = function (entities, type) {
+        return this.findEntity(entities, type)
+            .map(function (entity) { return entity.entity; });
     };
     return LUIS;
 }());
@@ -11127,7 +11132,7 @@ exports.LUIS = LUIS;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var Rules_1 = __webpack_require__(24);
-var rxjs_1 = __webpack_require__(14);
+var rxjs_1 = __webpack_require__(15);
 var Prompts = (function () {
     function Prompts(getPromptKey, setPromptKey) {
         this.getPromptKey = getPromptKey;
@@ -11225,7 +11230,7 @@ exports.Prompts = Prompts;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var rxjs_1 = __webpack_require__(14);
+var rxjs_1 = __webpack_require__(15);
 var Rules_1 = __webpack_require__(24);
 var RE = (function () {
     function RE() {
@@ -12821,7 +12826,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var Observable_1 = __webpack_require__(0);
 var ScalarObservable_1 = __webpack_require__(40);
-var EmptyObservable_1 = __webpack_require__(13);
+var EmptyObservable_1 = __webpack_require__(14);
 /**
  * We need this JSDoc comment for affecting ESDoc.
  * @extends {Ignored}
@@ -13632,8 +13637,8 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var Observable_1 = __webpack_require__(0);
-var EmptyObservable_1 = __webpack_require__(13);
-var isArray_1 = __webpack_require__(11);
+var EmptyObservable_1 = __webpack_require__(14);
+var isArray_1 = __webpack_require__(12);
 var subscribeToResult_1 = __webpack_require__(3);
 var OuterSubscriber_1 = __webpack_require__(2);
 /**
@@ -14015,7 +14020,7 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var Observable_1 = __webpack_require__(0);
-var isScheduler_1 = __webpack_require__(12);
+var isScheduler_1 = __webpack_require__(13);
 var selfSelector = function (value) { return value; };
 /**
  * We need this JSDoc comment for affecting ESDoc.
@@ -14803,7 +14808,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 var isNumeric_1 = __webpack_require__(34);
 var Observable_1 = __webpack_require__(0);
 var async_1 = __webpack_require__(9);
-var isScheduler_1 = __webpack_require__(12);
+var isScheduler_1 = __webpack_require__(13);
 var isDate_1 = __webpack_require__(32);
 /**
  * We need this JSDoc comment for affecting ESDoc.
@@ -14995,9 +15000,9 @@ exports.bindNodeCallback = BoundNodeCallbackObservable_1.BoundNodeCallbackObserv
 
 "use strict";
 
-var isScheduler_1 = __webpack_require__(12);
-var isArray_1 = __webpack_require__(11);
-var ArrayObservable_1 = __webpack_require__(10);
+var isScheduler_1 = __webpack_require__(13);
+var isArray_1 = __webpack_require__(12);
+var ArrayObservable_1 = __webpack_require__(11);
 var combineLatest_1 = __webpack_require__(41);
 /* tslint:enable:max-line-length */
 /**
@@ -15433,7 +15438,7 @@ exports.webSocket = WebSocketSubject_1.WebSocketSubject.create;
 
 "use strict";
 
-var EmptyObservable_1 = __webpack_require__(13);
+var EmptyObservable_1 = __webpack_require__(14);
 exports.empty = EmptyObservable_1.EmptyObservable.create;
 
 
@@ -15533,7 +15538,7 @@ exports.never = NeverObservable_1.NeverObservable.create;
 
 "use strict";
 
-var ArrayObservable_1 = __webpack_require__(10);
+var ArrayObservable_1 = __webpack_require__(11);
 exports.of = ArrayObservable_1.ArrayObservable.of;
 
 
@@ -16064,7 +16069,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var async_1 = __webpack_require__(9);
 var Subscriber_1 = __webpack_require__(1);
-var isScheduler_1 = __webpack_require__(12);
+var isScheduler_1 = __webpack_require__(13);
 /* tslint:enable:max-line-length */
 /**
  * Buffers the source Observable values for a specific time period.
@@ -20198,7 +20203,7 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var Subscriber_1 = __webpack_require__(1);
-var EmptyObservable_1 = __webpack_require__(13);
+var EmptyObservable_1 = __webpack_require__(14);
 /**
  * Returns an Observable that repeats the stream of items emitted by the source Observable at most count times.
  *
@@ -21381,11 +21386,11 @@ var SkipWhileSubscriber = (function (_super) {
 
 "use strict";
 
-var ArrayObservable_1 = __webpack_require__(10);
+var ArrayObservable_1 = __webpack_require__(11);
 var ScalarObservable_1 = __webpack_require__(40);
-var EmptyObservable_1 = __webpack_require__(13);
+var EmptyObservable_1 = __webpack_require__(14);
 var concat_1 = __webpack_require__(42);
-var isScheduler_1 = __webpack_require__(12);
+var isScheduler_1 = __webpack_require__(13);
 /* tslint:enable:max-line-length */
 /**
  * Returns an Observable that emits the items you specify as arguments before it begins to emit
@@ -21866,7 +21871,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var Subscriber_1 = __webpack_require__(1);
 var ArgumentOutOfRangeError_1 = __webpack_require__(29);
-var EmptyObservable_1 = __webpack_require__(13);
+var EmptyObservable_1 = __webpack_require__(14);
 /**
  * Emits only the first `count` values emitted by the source Observable.
  *
@@ -21961,7 +21966,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var Subscriber_1 = __webpack_require__(1);
 var ArgumentOutOfRangeError_1 = __webpack_require__(29);
-var EmptyObservable_1 = __webpack_require__(13);
+var EmptyObservable_1 = __webpack_require__(14);
 /**
  * Emits only the last `count` values emitted by the source Observable.
  *
@@ -23034,7 +23039,7 @@ var Subject_1 = __webpack_require__(5);
 var async_1 = __webpack_require__(9);
 var Subscriber_1 = __webpack_require__(1);
 var isNumeric_1 = __webpack_require__(34);
-var isScheduler_1 = __webpack_require__(12);
+var isScheduler_1 = __webpack_require__(13);
 function windowTime(windowTimeSpan) {
     var scheduler = async_1.async;
     var windowCreationInterval = null;

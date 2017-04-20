@@ -258,8 +258,8 @@ const recipeRule = firstMatch<RecipeBotInput>(
     // For testing LUIS
 
     luis.bestMatch(
-        luis.intent('singASong', (input, args) => input.reply(`Let's sing ${luis.entityValue(args, 'song')}`)),
-        luis.intent('findSomething', (input, args) => input.reply(`Okay let's find a ${luis.entityValue(args, 'what')} in ${luis.entityValue(args, 'where')}`))
+        luis.intent('singASong', (input, entities) => input.reply(`Let's sing ${luis.entityValues(entities, 'song')[0]}`)),
+        luis.intent('findSomething', (input, entities) => input.reply(`Okay let's find a ${luis.entityValues(entities, 'what')[0]} in ${luis.entityValues(entities, 'where')[0]}`))
     ),
 
     // If there is no recipe, we have to pick one
