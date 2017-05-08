@@ -991,16 +991,22 @@ exports.errorObject = { e: {} };
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(global) {
-/**
- * window: browser in DOM main thread
- * self: browser in WebWorker
- * global: Node.js/other
- */
-exports.root = (typeof window == 'object' && window.window === window && window
-    || typeof self == 'object' && self.self === self && self
-    || typeof global == 'object' && global.global === global && global);
-if (!exports.root) {
-    throw new Error('RxJS could not find any global context (window, self, global)');
+if (typeof window == 'object' && window.window === window) {
+    exports.root = window;
+}
+else if (typeof self == 'object' && self.self === self) {
+    exports.root = self;
+}
+else if (typeof global == 'object' && global.global === global) {
+    exports.root = global;
+}
+else {
+    // Workaround Closure Compiler restriction: The body of a goog.module cannot use throw.
+    // This is needed when used with angular/tsickle which inserts a goog.module statement.
+    // Wrap in IIFE
+    (function () {
+        throw new Error('RxJS could not find any global context (window, self, global)');
+    })();
 }
 
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(17)))
@@ -1088,9 +1094,9 @@ exports.async = new AsyncScheduler_1.AsyncScheduler(AsyncAction_1.AsyncAction);
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
+
 // Eventually this libary might be factored into multiple libraries/plugins. Until then, this
 // file exists as an entry point to the entire thing.
-
 function __export(m) {
     for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
 }
@@ -1121,7 +1127,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var Observable_1 = __webpack_require__(0);
 var ScalarObservable_1 = __webpack_require__(40);
-var EmptyObservable_1 = __webpack_require__(14);
+var EmptyObservable_1 = __webpack_require__(15);
 var isScheduler_1 = __webpack_require__(13);
 /**
  * We need this JSDoc comment for affecting ESDoc.
@@ -1259,93 +1265,6 @@ exports.isScheduler = isScheduler;
 
 /***/ }),
 /* 14 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
-var Observable_1 = __webpack_require__(0);
-/**
- * We need this JSDoc comment for affecting ESDoc.
- * @extends {Ignored}
- * @hide true
- */
-var EmptyObservable = (function (_super) {
-    __extends(EmptyObservable, _super);
-    function EmptyObservable(scheduler) {
-        _super.call(this);
-        this.scheduler = scheduler;
-    }
-    /**
-     * Creates an Observable that emits no items to the Observer and immediately
-     * emits a complete notification.
-     *
-     * <span class="informal">Just emits 'complete', and nothing else.
-     * </span>
-     *
-     * <img src="./img/empty.png" width="100%">
-     *
-     * This static operator is useful for creating a simple Observable that only
-     * emits the complete notification. It can be used for composing with other
-     * Observables, such as in a {@link mergeMap}.
-     *
-     * @example <caption>Emit the number 7, then complete.</caption>
-     * var result = Rx.Observable.empty().startWith(7);
-     * result.subscribe(x => console.log(x));
-     *
-     * @example <caption>Map and flatten only odd numbers to the sequence 'a', 'b', 'c'</caption>
-     * var interval = Rx.Observable.interval(1000);
-     * var result = interval.mergeMap(x =>
-     *   x % 2 === 1 ? Rx.Observable.of('a', 'b', 'c') : Rx.Observable.empty()
-     * );
-     * result.subscribe(x => console.log(x));
-     *
-     * // Results in the following to the console:
-     * // x is equal to the count on the interval eg(0,1,2,3,...)
-     * // x will occur every 1000ms
-     * // if x % 2 is equal to 1 print abc
-     * // if x % 2 is not equal to 1 nothing will be output
-     *
-     * @see {@link create}
-     * @see {@link never}
-     * @see {@link of}
-     * @see {@link throw}
-     *
-     * @param {Scheduler} [scheduler] A {@link IScheduler} to use for scheduling
-     * the emission of the complete notification.
-     * @return {Observable} An "empty" Observable: emits only the complete
-     * notification.
-     * @static true
-     * @name empty
-     * @owner Observable
-     */
-    EmptyObservable.create = function (scheduler) {
-        return new EmptyObservable(scheduler);
-    };
-    EmptyObservable.dispatch = function (arg) {
-        var subscriber = arg.subscriber;
-        subscriber.complete();
-    };
-    EmptyObservable.prototype._subscribe = function (subscriber) {
-        var scheduler = this.scheduler;
-        if (scheduler) {
-            return scheduler.schedule(EmptyObservable.dispatch, 0, { subscriber: subscriber });
-        }
-        else {
-            subscriber.complete();
-        }
-    };
-    return EmptyObservable;
-}(Observable_1.Observable));
-exports.EmptyObservable = EmptyObservable;
-
-
-/***/ }),
-/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1575,6 +1494,93 @@ var Symbol = {
     iterator: iterator_1.iterator
 };
 exports.Symbol = Symbol;
+
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Observable_1 = __webpack_require__(0);
+/**
+ * We need this JSDoc comment for affecting ESDoc.
+ * @extends {Ignored}
+ * @hide true
+ */
+var EmptyObservable = (function (_super) {
+    __extends(EmptyObservable, _super);
+    function EmptyObservable(scheduler) {
+        _super.call(this);
+        this.scheduler = scheduler;
+    }
+    /**
+     * Creates an Observable that emits no items to the Observer and immediately
+     * emits a complete notification.
+     *
+     * <span class="informal">Just emits 'complete', and nothing else.
+     * </span>
+     *
+     * <img src="./img/empty.png" width="100%">
+     *
+     * This static operator is useful for creating a simple Observable that only
+     * emits the complete notification. It can be used for composing with other
+     * Observables, such as in a {@link mergeMap}.
+     *
+     * @example <caption>Emit the number 7, then complete.</caption>
+     * var result = Rx.Observable.empty().startWith(7);
+     * result.subscribe(x => console.log(x));
+     *
+     * @example <caption>Map and flatten only odd numbers to the sequence 'a', 'b', 'c'</caption>
+     * var interval = Rx.Observable.interval(1000);
+     * var result = interval.mergeMap(x =>
+     *   x % 2 === 1 ? Rx.Observable.of('a', 'b', 'c') : Rx.Observable.empty()
+     * );
+     * result.subscribe(x => console.log(x));
+     *
+     * // Results in the following to the console:
+     * // x is equal to the count on the interval eg(0,1,2,3,...)
+     * // x will occur every 1000ms
+     * // if x % 2 is equal to 1 print abc
+     * // if x % 2 is not equal to 1 nothing will be output
+     *
+     * @see {@link create}
+     * @see {@link never}
+     * @see {@link of}
+     * @see {@link throw}
+     *
+     * @param {Scheduler} [scheduler] A {@link IScheduler} to use for scheduling
+     * the emission of the complete notification.
+     * @return {Observable} An "empty" Observable: emits only the complete
+     * notification.
+     * @static true
+     * @name empty
+     * @owner Observable
+     */
+    EmptyObservable.create = function (scheduler) {
+        return new EmptyObservable(scheduler);
+    };
+    EmptyObservable.dispatch = function (arg) {
+        var subscriber = arg.subscriber;
+        subscriber.complete();
+    };
+    EmptyObservable.prototype._subscribe = function (subscriber) {
+        var scheduler = this.scheduler;
+        if (scheduler) {
+            return scheduler.schedule(EmptyObservable.dispatch, 0, { subscriber: subscriber });
+        }
+        else {
+            subscriber.complete();
+        }
+    };
+    return EmptyObservable;
+}(Observable_1.Observable));
+exports.EmptyObservable = EmptyObservable;
 
 
 /***/ }),
@@ -1903,11 +1909,11 @@ var AsyncAction = (function (_super) {
     AsyncAction.prototype.recycleAsyncId = function (scheduler, id, delay) {
         if (delay === void 0) { delay = 0; }
         // If this action is rescheduled with the same delay time, don't clear the interval id.
-        if (delay !== null && this.delay === delay) {
+        if (delay !== null && this.delay === delay && this.pending === false) {
             return id;
         }
         // Otherwise, if the action's delay time is different from the current delay,
-        // clear the interval id
+        // or the action has been rescheduled before it's executed, clear the interval id
         return root_1.root.clearInterval(id) && undefined || undefined;
     };
     /**
@@ -2129,65 +2135,211 @@ module.exports = isObject;
 
 "use strict";
 
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
-var rxjs_1 = __webpack_require__(15);
-exports.defaultRule = function (action) { return function (input) { return ({
-    action: function () { return action(input); }
-}); }; };
+var rxjs_1 = __webpack_require__(14);
+var minMatch = {
+    score: Number.MIN_VALUE
+};
 exports.arrayize = function (stuff) { return Array.isArray(stuff) ? stuff : [stuff]; };
 exports.observize = function (t) {
-    if (t instanceof rxjs_1.Observable)
-        return t;
-    if (t instanceof Promise)
-        return rxjs_1.Observable.fromPromise(t);
-    if (t === undefined || t === null)
+    if (!t)
         return rxjs_1.Observable.empty();
+    if (t instanceof rxjs_1.Observable)
+        return t.filter(function (i) { return !!i; });
+    if (t instanceof Promise)
+        return rxjs_1.Observable.fromPromise(t).filter(function (i) { return !!i; });
     return rxjs_1.Observable.of(t);
 };
-exports.doRule = function (input, rule) {
-    return exports.observize(rule(input))
-        .flatMap(function (match) { return exports.observize(match.action()); });
-};
-exports.composeRule = function (rule) { return function (input) {
-    return exports.doRule(input, rule);
-}; };
-exports.firstMatch$ = function (rule$) { return function (input) {
-    return rule$
-        .do(function (_) { return console.log("firstMatch: trying rule"); })
-        .flatMap(function (rule) { return exports.observize(rule(input)); }, 1)
-        .take(1);
-}; }; // so that we don't keep going through rules
-exports.firstMatch = function () {
+var BaseRule = (function () {
+    function BaseRule() {
+    }
+    BaseRule.prototype.handle = function (match) {
+        return this.recognize(match)
+            .do(function (result) { return console.log("handle: got a recognized rule", result); })
+            .flatMap(function (result) { return result.action(); })
+            .do(function (_) { return console.log("handle: called action"); });
+    };
+    BaseRule.prototype.prepend = function (recognizer) {
+        return new PrependedRule(recognizer, this);
+    };
+    return BaseRule;
+}());
+exports.BaseRule = BaseRule;
+function combineRecognizers() {
+    var recognizers = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        recognizers[_i] = arguments[_i];
+    }
+    return function (match) {
+        return rxjs_1.Observable.from(recognizers)
+            .reduce(function (prevObservable, currentRecognizer, i) {
+            return prevObservable
+                .flatMap(function (prevMatch) {
+                console.log("calling recognizer #" + i, currentRecognizer);
+                return exports.observize(currentRecognizer(prevMatch)).do(function (result) { return console.log("result", result); });
+            });
+        }, rxjs_1.Observable.of(match))
+            .flatMap(function (omatch) { return omatch; });
+    };
+}
+exports.combineRecognizers = combineRecognizers;
+var SimpleRule = (function (_super) {
+    __extends(SimpleRule, _super);
+    function SimpleRule() {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        var _this = _super.call(this) || this;
+        if (args.length === 0) {
+            console.error("rules must at least have a handler");
+            return _this;
+        }
+        _this.recognizers = args.slice(0, args.length - 1);
+        _this.handler = args[args.length - 1];
+        return _this;
+    }
+    SimpleRule.prototype.recognize = function (match) {
+        var _this = this;
+        console.log("trying to match a rule");
+        return this.recognizers && this.recognizers.length
+            ? combineRecognizers.apply(void 0, this.recognizers)(match)
+                .do(function (m) { return console.log("match", m); })
+                .map(function (m) { return ({
+                score: m.score,
+                action: function () { return exports.observize(_this.handler(m)); }
+            }); })
+            : rxjs_1.Observable.of({
+                score: match.score,
+                action: function () { return _this.handler(match); }
+            });
+    };
+    SimpleRule.prototype.prepend = function (recognizer) {
+        return new (SimpleRule.bind.apply(SimpleRule, [void 0, recognizer].concat(this.recognizers, [this.handler])))();
+    };
+    return SimpleRule;
+}(BaseRule));
+exports.SimpleRule = SimpleRule;
+function rule() {
+    var args = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        args[_i] = arguments[_i];
+    }
+    return new (SimpleRule.bind.apply(SimpleRule, [void 0].concat(args)))();
+}
+exports.rule = rule;
+var FirstMatchingRule = (function (_super) {
+    __extends(FirstMatchingRule, _super);
+    function FirstMatchingRule() {
+        var rules = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            rules[_i] = arguments[_i];
+        }
+        var _this = _super.call(this) || this;
+        _this.rule$ = rxjs_1.Observable.from(rules).filter(function (rule) { return !!rule; });
+        return _this;
+    }
+    FirstMatchingRule.prototype.recognize = function (match) {
+        console.log("Rule.first", this.rule$);
+        return this.rule$
+            .flatMap(function (rule, i) {
+            console.log("Rule.first: trying rule #" + i);
+            return rule.recognize(match)
+                .do(function (m) { return console.log("Rule.first: rule #" + i + " succeeded", m); });
+        }, 1)
+            .take(1); // so that we don't keep going through rules after we find one that matches
+    };
+    return FirstMatchingRule;
+}(BaseRule));
+exports.FirstMatchingRule = FirstMatchingRule;
+function first() {
     var rules = [];
     for (var _i = 0; _i < arguments.length; _i++) {
         rules[_i] = arguments[_i];
     }
-    return function (input) {
-        return exports.firstMatch$(rxjs_1.Observable.from(rules))(input);
-    };
-};
-exports.bestMatch$ = function (rule$) { return function (input) {
-    return rule$
-        .do(function (_) { return console.log("bestMatch$: trying rule"); })
-        .flatMap(function (rule) { return exports.observize(rule(input)); })
-        .takeWhile(function (match) { return match.score < 1; })
-        .reduce(function (prev, current) { return prev && Math.max(prev.score || 1, 1) > Math.max(current.score || 1, 1) ? prev : current; });
-}; };
-// TODO: don't call reduce if current.score >= 1
-exports.bestMatch = function () {
-    var rules = [];
-    for (var _i = 0; _i < arguments.length; _i++) {
-        rules[_i] = arguments[_i];
+    return new (FirstMatchingRule.bind.apply(FirstMatchingRule, [void 0].concat(rules)))();
+}
+exports.first = first;
+function filter(predicate, rule) {
+    return rule.prepend(function (match) {
+        return exports.observize(predicate(match))
+            .map(function (_) { return match; });
+    });
+}
+exports.filter = filter;
+var PrependedRule = (function (_super) {
+    __extends(PrependedRule, _super);
+    // TO DO: let this take multiple recognizers
+    function PrependedRule(recognizer, rule) {
+        var _this = _super.call(this) || this;
+        _this.recognizer = recognizer;
+        _this.rule = rule;
+        return _this;
     }
-    return function (input) {
-        return exports.bestMatch$(rxjs_1.Observable.from(rules))(input);
+    PrependedRule.prototype.recognize = function (match) {
+        var _this = this;
+        return exports.observize(this.recognizer(match))
+            .flatMap(function (m) { return _this.rule.recognize(m); });
     };
-};
-exports.filter = function (query, rule) { return function (input) {
-    return exports.observize(query(input))
-        .filter(function (result) { return !!result; })
-        .flatMap(function (_) { return exports.observize(rule(input)); });
+    return PrependedRule;
+}(BaseRule));
+exports.PrependedRule = PrependedRule;
+function prepend(recognizer, rule) {
+    return rule.prepend(recognizer);
+}
+exports.prepend = prepend;
+exports.matchAll = function (match) { return match; };
+var passThrough = function (handler) { return function (match) {
+    return exports.observize(handler(match))
+        .map(function (_) { return null; });
 }; };
+var nullHandler = function () { return console.warn("this is never actually executed"); };
+function run(handler) {
+    return new SimpleRule(passThrough(handler), nullHandler);
+}
+exports.run = run;
+// These are left over from the previous API and need to be updated to the latest hotness
+// static best$<M extends Match>(rule$: Observable<Rule<M>>): Rule<M> {
+//     return new Rule<M>(
+//         (match: M) =>
+//             rule$
+//             .do(_ => console.log("Rule.best: trying rule"))
+//             .flatMap(rule =>
+//                 rule.recognize(match)
+//                 .map(match => ({
+//                     ... match,
+//                     handler: rule.handler
+//                 }))
+//             )
+//             .reduce<Match>((prev, current) => Math.min(prev.score || 1, 1) > Math.min(current.score || 1, 1) ? prev : current, minMatch)
+//             .takeWhile(match => match.score && match.score < 1),
+//         (match: M & { handler: GenericHandler }) =>
+//             match.handler(match)
+//     );
+// }
+// static best<M extends Match>(... rules: Rule<M>[]): Rule<M> {
+//     return Rule.first$(Observable.from(rules).filter(rule => !!rule));
+// }
+// export const everyMatch$ = <S>(rule$: Observable<Rule<S>>, scoreThreshold = 0) => (input) =>
+//     rule$
+//     .do(_ => console.log("everyMatch$: trying rule"))
+//     .flatMap(rule => observize(rule(input)))
+//     .reduce((prev, current) => (current.score || 1) < scoreThreshold ? prev : {
+//         action: prev
+//             ? () => observize(prev.action()).flatMap(_ => observize(current.action()))
+//             : () => current.action()
+//         }
+//     );
 
 
 /***/ }),
@@ -2806,6 +2958,10 @@ process.off = noop;
 process.removeListener = noop;
 process.removeAllListeners = noop;
 process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
 
 process.binding = function (name) {
     throw new Error('process.binding is not supported');
@@ -3409,7 +3565,7 @@ var Subscriber_1 = __webpack_require__(1);
  * applies a projection to each value and emits that projection in the output
  * Observable.
  *
- * @example <caption>Map every every click to the clientX position of that click</caption>
+ * @example <caption>Map every click to the clientX position of that click</caption>
  * var clicks = Rx.Observable.fromEvent(document, 'click');
  * var positions = clicks.map(ev => ev.clientX);
  * positions.subscribe(x => console.log(x));
@@ -4319,8 +4475,8 @@ module.exports = noop;
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-// Generic Chat support
 
+// Generic Chat support
 var __assign = (this && this.__assign) || Object.assign || function(t) {
     for (var s, i = 1, n = arguments.length; i < n; i++) {
         s = arguments[i];
@@ -4330,7 +4486,7 @@ var __assign = (this && this.__assign) || Object.assign || function(t) {
     return t;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var rxjs_1 = __webpack_require__(15);
+var rxjs_1 = __webpack_require__(14);
 var UniversalChat = (function () {
     function UniversalChat() {
         var chats = [];
@@ -4365,12 +4521,12 @@ var UniversalChat = (function () {
     return UniversalChat;
 }());
 exports.UniversalChat = UniversalChat;
-exports.getAddress = function (message) { return ({
-    userId: message.from.id,
-    conversationId: message.conversation.id,
-    channelId: message.channelId
+exports.getAddress = function (activity) { return ({
+    userId: activity.from.id,
+    conversationId: activity.conversation.id,
+    channelId: activity.channelId
 }); };
-exports.reply = function (message) { return function (input) { return input.reply(message); }; };
+exports.reply = function (message) { return function (match) { return match.reply(message); }; };
 
 
 /***/ }),
@@ -4419,11 +4575,11 @@ function compose() {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return ActionTypes; });
+/* harmony export (immutable) */ __webpack_exports__["a"] = createStore;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_lodash_es_isPlainObject__ = __webpack_require__(48);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_symbol_observable__ = __webpack_require__(415);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_symbol_observable___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_symbol_observable__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return ActionTypes; });
-/* harmony export (immutable) */ __webpack_exports__["a"] = createStore;
 
 
 
@@ -7554,8 +7710,8 @@ module.exports = longestCommonSubstring
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process) {Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__createStore__ = __webpack_require__(56);
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__createStore__ = __webpack_require__(56);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__combineReducers__ = __webpack_require__(156);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__bindActionCreators__ = __webpack_require__(155);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__applyMiddleware__ = __webpack_require__(154);
@@ -7609,7 +7765,7 @@ var recipes = recipes_1.recipesRaw;
 //convertIngredient("1lb cheese", "metric");
 //convertIngredient("10g cheese", "imperial");
 weightsAndMeasures_1.convertIngredient("10floz milk", "metric");
-var rxjs_1 = __webpack_require__(15);
+var rxjs_1 = __webpack_require__(14);
 var prague_1 = __webpack_require__(10);
 var webChat = new prague_1.WebChatConnector();
 window["browserBot"] = webChat.botConnection;
@@ -7645,24 +7801,24 @@ var recipeBotChat = new prague_2.ReduxChat(new prague_1.UniversalChat(webChat.ch
 var prague_3 = __webpack_require__(10);
 // Prompts
 var prague_4 = __webpack_require__(10);
-var prompts = new prague_4.Prompts(function (input) { return input.data.userInConversation.promptKey; }, function (input, promptKey) { return input.store.dispatch({ type: 'Set_PromptKey', promptKey: promptKey }); });
+var prompts = new prague_4.Prompts(function (match) { return match.data.userInConversation.promptKey; }, function (match, promptKey) { return match.store.dispatch({ type: 'Set_PromptKey', promptKey: promptKey }); });
 var cheeses = ['Cheddar', 'Wensleydale', 'Brie', 'Velveeta'];
-prompts.add('Favorite_Color', prompts.text("What is your favorite color?", function (input, text) {
-    return input.reply(text === "blue" ? "That is correct!" : "That is incorrect");
+prompts.add('Favorite_Color', prompts.text("What is your favorite color?", function (match) {
+    return match.reply(match.text === "blue" ? "That is correct!" : "That is incorrect");
 }));
-prompts.add('Favorite_Cheese', prompts.choice("What is your favorite cheese?", cheeses, function (input, choice) {
-    return input.reply(choice === "Velveeta" ? "Ima let you finish but FYI that is not really cheese." : "Interesting.");
+prompts.add('Favorite_Cheese', prompts.choice("What is your favorite cheese?", cheeses, function (match) {
+    return match.reply(match.choice === "Velveeta" ? "Ima let you finish but FYI that is not really cheese." : "Interesting.");
 }));
-prompts.add('Like_Cheese', prompts.confirm("Do you like cheese?", function (input, confirm) {
-    return input.reply(confirm ? "That is correct." : "That is incorrect.");
+prompts.add('Like_Cheese', prompts.confirm("Do you like cheese?", function (match) {
+    return match.reply(match.confirm ? "That is correct." : "That is incorrect.");
 }));
 // Intents
 // Message actions
-var chooseRecipe = function (input, args) {
-    var name = args.groups[1];
+var chooseRecipe = function (match) {
+    var name = match.groups[1];
     var recipe = recipeFromName(name);
     if (recipe) {
-        input.store.dispatch({ type: 'Set_Recipe', recipe: recipe });
+        match.store.dispatch({ type: 'Set_Recipe', recipe: recipe });
         return rxjs_1.Observable.from([
             "Great, let's make " + name + " which " + recipe.recipeYield.toLowerCase() + "!",
             "Here are the ingredients:"
@@ -7670,47 +7826,47 @@ var chooseRecipe = function (input, args) {
             "Let me know when you're ready to go."
         ]))
             .zip(rxjs_1.Observable.timer(0, 1000), function (x) { return x; }) // Right now we're having trouble introducing delays
-            .do(function (ingredient) { return input.reply(ingredient); })
+            .do(function (ingredient) { return match.reply(ingredient); })
             .count();
     }
     else {
-        return input.replyAsync("Sorry, I don't know how to make " + name + ". Maybe one day you can teach me.");
+        return match.replyAsync("Sorry, I don't know how to make " + name + ". Maybe one day you can teach me.");
     }
 };
-var queryQuantity = function (input, args) {
-    var ingredientQuery = args.groups[1].split('');
-    var ingredient = input.data.userInConversation.recipe.recipeIngredient
+var queryQuantity = function (match) {
+    var ingredientQuery = match.groups[1].split('');
+    var ingredient = match.data.userInConversation.recipe.recipeIngredient
         .map(function (i) { return [i, lcs(i.split(''), ingredientQuery).length]; })
         .reduce(function (prev, curr) { return prev[1] > curr[1] ? prev : curr; })[0];
-    input.reply(ingredient);
+    match.reply(ingredient);
 };
-var nextInstruction = function (input, args) {
-    var nextInstruction = input.data.userInConversation.lastInstructionSent + 1;
-    if (nextInstruction < input.data.userInConversation.recipe.recipeInstructions.length)
-        sayInstruction(input, { instruction: nextInstruction });
+var nextInstruction = function (match) {
+    var nextInstruction = match.data.userInConversation.lastInstructionSent + 1;
+    if (nextInstruction < match.data.userInConversation.recipe.recipeInstructions.length)
+        sayInstruction(__assign({}, match, { instruction: nextInstruction }));
     else
-        input.reply("That's it!");
+        match.reply("That's it!");
 };
-var previousInstruction = function (input, args) {
-    var prevInstruction = input.data.userInConversation.lastInstructionSent - 1;
+var previousInstruction = function (match) {
+    var prevInstruction = match.data.userInConversation.lastInstructionSent - 1;
     if (prevInstruction >= 0)
-        sayInstruction(input, { instruction: prevInstruction });
+        sayInstruction(__assign({}, match, { instruction: prevInstruction }));
     else
-        input.reply("We're at the beginning.");
+        match.reply("We're at the beginning.");
 };
-var sayInstruction = function (input, args) {
-    input.reply(input.data.userInConversation.recipe.recipeInstructions[args.instruction]);
-    if (input.data.userInConversation.recipe.recipeInstructions.length === args.instruction + 1)
-        input.reply("That's it!");
-    store.dispatch({ type: 'Set_Instruction', instruction: args.instruction });
+var sayInstruction = function (match) {
+    match.reply(match.data.userInConversation.recipe.recipeInstructions[match.instruction]);
+    if (match.data.userInConversation.recipe.recipeInstructions.length === match.instruction + 1)
+        match.reply("That's it!");
+    store.dispatch({ type: 'Set_Instruction', instruction: match.instruction });
 };
 // const globalDefaultRule = defaultRule(reply("I can't understand you. It's you, not me. Get it together and try again."));
 var recipeFromName = function (name) {
     return recipes.find(function (recipe) { return recipe.name.toLowerCase() === name.toLowerCase(); });
 };
-var queries = {
-    noRecipe: function (input) { return !input.data.userInConversation.recipe; },
-    noInstructionsSent: function (input) { return input.data.userInConversation.lastInstructionSent === undefined; },
+var filters = {
+    noRecipe: function (match) { return !match.data.userInConversation.recipe; },
+    noInstructionsSent: function (match) { return match.data.userInConversation.lastInstructionSent === undefined; },
 };
 // RegExp
 var intents = {
@@ -7731,30 +7887,25 @@ var intents = {
 var re = new prague_1.RE();
 // LUIS
 var prague_5 = __webpack_require__(10);
-var luis = new prague_5.LUIS('id', 'key', .5);
-var recipeRule = prague_3.firstMatch(
+var luis = new prague_5.LuisModel('id', 'key', .5);
+var recipeRule = prague_3.first(
 // Prompts
-prompts.rule(), 
+prompts, 
 // For testing Prompts
-prague_3.firstMatch(re.rule(intents.askQuestion, prompts.reply('Favorite_Color')), re.rule(intents.askYorNQuestion, prompts.reply('Like_Cheese')), re.rule(intents.askChoiceQuestion, prompts.reply('Favorite_Cheese'))), 
+prague_3.first(re.rule(intents.askQuestion, prompts.reply('Favorite_Color')), re.rule(intents.askYorNQuestion, prompts.reply('Like_Cheese')), re.rule(intents.askChoiceQuestion, prompts.reply('Favorite_Cheese'))), 
 // For testing LUIS
-luis.bestMatch(luis.intent('singASong', function (input, entities) { return input.reply("Let's sing " + luis.entityValues(entities, 'song')[0]); }), luis.intent('findSomething', function (input, entities) { return input.reply("Okay let's find a " + luis.entityValues(entities, 'what')[0] + " in " + luis.entityValues(entities, 'where')[0]); })), 
+luis.best(luis.rule('singASong', function (match) { return match.reply("Let's sing " + match.entityValues('song')[0]); }), luis.rule('findSomething', function (match) { return match.reply("Okay let's find a " + match.entityValues('what')[0] + " in " + match.entityValues('where')[0]); })), 
 // If there is no recipe, we have to pick one
-prague_3.filter(queries.noRecipe, prague_3.firstMatch(re.rule(intents.chooseRecipe, chooseRecipe), re.rule([intents.queryQuantity, intents.instructions.start, intents.instructions.restart], prague_3.reply("First please choose a recipe")), re.rule(intents.all, chooseRecipe))), 
+prague_3.filter(filters.noRecipe, prague_3.first(re.rule(intents.chooseRecipe, chooseRecipe), re.rule([intents.queryQuantity, intents.instructions.start, intents.instructions.restart], prague_3.reply("First please choose a recipe")), re.rule(intents.all, chooseRecipe))), 
 // Now that we have a recipe, these can happen at any time
 re.rule(intents.queryQuantity, queryQuantity), // TODO: conversions go here
 // If we haven't started listing instructions, wait for the user to tell us to start
-prague_3.filter(queries.noInstructionsSent, re.rule([intents.instructions.start, intents.instructions.next], function (input, args) { return sayInstruction(input, { instruction: 0 }); })), 
+prague_3.filter(filters.noInstructionsSent, re.rule([intents.instructions.start, intents.instructions.next], function (match) { return sayInstruction(__assign({}, match, { instruction: 0 })); })), 
 // We are listing instructions. Let the user navigate among them.
-prague_3.firstMatch(re.rule(intents.instructions.next, nextInstruction), re.rule(intents.instructions.repeat, function (input, args) { return sayInstruction(input, { instruction: input.data.userInConversation.lastInstructionSent }); }), re.rule(intents.instructions.previous, previousInstruction), re.rule(intents.instructions.restart, function (input, args) { return sayInstruction(input, { instruction: 0 }); })));
-recipeBotChat.input$
-    .do(function (input) { return console.log("message", input.message); })
-    .do(function (input) { return console.log("state before", input.state); })
-    .flatMap(function (input) {
-    return prague_3.doRule(input, recipeRule)
-        .do(function (_) { return console.log("state after", input.store.getState()); });
-})
-    .subscribe();
+prague_3.first(re.rule(intents.instructions.next, nextInstruction), re.rule(intents.instructions.repeat, function (match) { return sayInstruction(__assign({}, match, { instruction: match.data.userInConversation.lastInstructionSent })); }), re.rule(intents.instructions.previous, previousInstruction), re.rule(intents.instructions.restart, function (match) { return sayInstruction(__assign({}, match, { instruction: 0 })); })));
+recipeBotChat.run({
+    messages: recipeRule
+});
 
 
 /***/ }),
@@ -10890,7 +11041,7 @@ var __assign = (this && this.__assign) || Object.assign || function(t) {
     return t;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var rxjs_1 = __webpack_require__(15);
+var rxjs_1 = __webpack_require__(14);
 var botframework_directlinejs_1 = __webpack_require__(109);
 var WebChatConnector = (function () {
     function WebChatConnector() {
@@ -10933,32 +11084,90 @@ exports.WebChatConnector = WebChatConnector;
 
 "use strict";
 
+var __assign = (this && this.__assign) || Object.assign || function(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+    }
+    return t;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+var rxjs_1 = __webpack_require__(14);
 var Chat_1 = __webpack_require__(54);
 var ReduxChat = (function () {
     function ReduxChat(chat, store, getBotData) {
-        this.input$ = chat.activity$
-            .filter(function (activity) { return activity.type === 'message'; })
-            .map(function (message) {
-            var address = Chat_1.getAddress(message);
-            var state = store.getState();
-            return {
-                // ITextInput
-                text: message.text,
-                // IChatInput
-                message: message,
-                address: address,
-                reply: function (activity) { return chat.send(address, activity); },
-                replyAsync: function (activity) { return chat.sendAsync(address, activity); },
-                // IStateInput
-                data: getBotData(state),
-                // IReduxInput
-                store: store,
-                state: state,
-                getBotData: getBotData,
-            };
-        });
+        this.chat = chat;
+        this.store = store;
+        this.getBotData = getBotData;
     }
+    // Recognizers
+    ReduxChat.prototype.activities = function () {
+        var _this = this;
+        return function (match) {
+            console.log("activities");
+            var address = Chat_1.getAddress(match.activity);
+            var state = _this.store.getState();
+            return __assign({}, match, { // remove "as any" when TypeScript fixes this bug
+                // IChatActivityMatch
+                address: address, reply: function (activity) { return _this.chat.send(address, activity); }, replyAsync: function (activity) { return _this.chat.sendAsync(address, activity); }, 
+                // IStateMatch
+                data: _this.getBotData(state), 
+                // IReduxMatch
+                store: _this.store, state: state, getBotData: _this.getBotData });
+        };
+    };
+    ReduxChat.prototype.messages = function () {
+        return function (match) {
+            console.log("messages");
+            return rxjs_1.Observable.of(match.activity)
+                .filter(function (activity) { return activity.type === 'message'; })
+                .map(function (message) { return (__assign({}, match, { 
+                // ITextMatch
+                text: message.text, 
+                // IChatMessageMatch
+                message: message })); });
+        };
+    };
+    ReduxChat.prototype.events = function () {
+        return function (match) {
+            return rxjs_1.Observable.of(match.activity)
+                .filter(function (activity) { return activity.type === 'event'; })
+                .map(function (event) { return (__assign({}, match, { // remove "as any" when TypeScript fixes this bug
+                // IChatEventMatch
+                event: event })); });
+        };
+    };
+    ReduxChat.prototype.typing = function () {
+        return function (match) {
+            return rxjs_1.Observable.of(match.activity)
+                .filter(function (activity) { return activity.type === 'typing'; })
+                .map(function (typing) { return (__assign({}, match, { // remove "as any" when TypeScript fixes this bug
+                // IChatTypingMatch
+                typing: typing })); });
+        };
+    };
+    ReduxChat.prototype.run = function (rules) {
+        var rule = rules.messages
+            .prepend(this.messages())
+            .prepend(this.activities());
+        // const rule = Rule.first(
+        //     Rule.do<I>(match => console.log("IActivityMatch", match)),
+        //     Rule.prepend(this.activities(), Rule.first(
+        //         Rule.do<A>(match => console.log("IReduxActivityMatch", match)),
+        //         Rule.do<A>(match => console.log("state before", match.state)),
+        //         rules.messages  && Rule.prepend(this.messages(),  rules.messages),
+        //         rules.events    && Rule.prepend(this.events(),    rules.events),
+        //         rules.typing    && Rule.prepend(this.typing(),    rules.typing),
+        //         rules.other
+        //     ))
+        // );
+        this.chat.activity$
+            .map(function (activity) { return ({ activity: activity }); })
+            .do(function (match) { return console.log("activity", match.activity); })
+            .flatMap(function (match) { return rule.handle(match); }, 1)
+            .subscribe(function (match) { return console.log("handled", match); }, function (error) { return console.log("error", error); }, function () { return console.log("complete"); });
+    };
     return ReduxChat;
 }());
 exports.ReduxChat = ReduxChat;
@@ -10970,12 +11179,36 @@ exports.ReduxChat = ReduxChat;
 
 "use strict";
 
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+var __assign = (this && this.__assign) || Object.assign || function(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+    }
+    return t;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-var rxjs_1 = __webpack_require__(15);
+var rxjs_1 = __webpack_require__(14);
 var Rules_1 = __webpack_require__(24);
-var LUIS = (function () {
-    function LUIS(id, key, scoreThreshold) {
+var entityFields = function (entities) { return ({
+    entities: entities,
+    findEntity: function (type) { return LuisModel.findEntity(entities, type); },
+    entityValues: function (type) { return LuisModel.entityValues(entities, type); },
+}); };
+var LuisModel = (function () {
+    function LuisModel(id, key, scoreThreshold) {
         if (scoreThreshold === void 0) { scoreThreshold = 0.5; }
+        var _this = this;
         this.scoreThreshold = scoreThreshold;
         this.cache = {};
         this.testData = {
@@ -11052,15 +11285,18 @@ var LUIS = (function () {
                     }]
             }
         };
+        this.match = function (match) {
+            return _this.call(match.text)
+                .filter(function (luisResponse) { return luisResponse.topScoringIntent.score >= _this.scoreThreshold; })
+                .map(function (luisResponse) { return (__assign({}, match, { luisResponse: __assign({}, luisResponse, { intents: (luisResponse.intents || luisResponse.topScoringIntent && [luisResponse.topScoringIntent])
+                        .filter(function (luisIntent) { return luisIntent.score >= _this.scoreThreshold; }) }) })); });
+        };
         this.url =
             id === 'id' && key === 'key' ? 'testData' :
                 "https://westus.api.cognitive.microsoft.com/luis/v2.0/apps/" + id + "?subscription-key=" + key + "&q=";
     }
-    LUIS.prototype.call = function (utterance) {
+    LuisModel.prototype.call = function (utterance) {
         var _this = this;
-        console.log("cache", this.cache);
-        console.log("utterance", utterance);
-        console.log("testData", this.testData);
         return rxjs_1.Observable.of(this.cache[utterance])
             .do(function (_) { return console.log("calling LUIS"); })
             .flatMap(function (response) { return response
@@ -11072,56 +11308,92 @@ var LUIS = (function () {
                     .map(function (ajaxResponse) { return ajaxResponse.response; }))
                 .do(function (luisResponse) { return _this.cache[utterance] = luisResponse; }); });
     };
-    LUIS.prototype.intent = function (intent, action) {
-        return {
-            intent: intent,
-            action: action
+    LuisModel.prototype.matchIntent = function (intent) {
+        var _this = this;
+        return function (match) {
+            return rxjs_1.Observable.from(match.luisResponse.intents)
+                .filter(function (luisIntent) { return luisIntent.intent === intent; })
+                .take(1)
+                .filter(function (luisIntent) { return luisIntent.score >= _this.scoreThreshold; })
+                .map(function (luisIntent) { return (__assign({}, match, entityFields(match.luisResponse.entities))); });
         };
     };
-    LUIS.prototype.rule = function (action) {
-        var _this = this;
-        return function (input) {
-            return _this.call(input.text)
-                .map(function (luisResponse) { return ({
-                score: luisResponse.topScoringIntent && luisResponse.topScoringIntent.score,
-                action: function () { return action(input, luisResponse); }
-            }); });
-        };
+    LuisModel.prototype.intentRule = function (intent, handler) {
+        return new Rules_1.SimpleRule(this.match, this.matchIntent(intent), handler);
+    };
+    LuisModel.prototype.rule = function (intent, handler) {
+        return ({
+            intent: intent,
+            handler: handler
+        });
     };
     // "classic" LUIS usage - for a given model, say what to do with each intent above a given threshold
-    // IMPORTANT: the order of rules is not important - the action for the *highest-ranked intent* will be executed
-    LUIS.prototype.bestMatch = function () {
+    // IMPORTANT: the order of rules is not important - the rule matching the *highest-ranked intent* will be executed
+    // Note that:
+    //      luis.best(
+    //          luis.rule('intent1', handler1),
+    //          luis.rule('intent2', handler2)
+    //      )
+    // is just a more efficient (and concise) version of:
+    //      Rule.first(
+    //          new Rule(luis.model(), luis.intent('intent1'), handler1)),
+    //          new Rule(luis.model(), luis.intent('intent2'), handler2))
+    //      )
+    // or:
+    //      Rule.first(
+    //          luis.rule('intent1', handler1),
+    //          luis.rule('intent2', handler2)
+    //      ).prepend(luis.model())
+    LuisModel.prototype.best = function () {
         var _this = this;
         var luisRules = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             luisRules[_i] = arguments[_i];
         }
-        return Rules_1.composeRule(this.rule(function (input, luisResponse) {
-            return rxjs_1.Observable.from(luisResponse.intents || luisResponse.topScoringIntent && [luisResponse.topScoringIntent])
-                .filter(function (intent) { return intent.score >= _this.scoreThreshold; })
-                .flatMap(function (intent) {
-                return rxjs_1.Observable.of(luisRules.find(function (luisRule) { return luisRule.intent === intent.intent; }))
-                    .filter(function (luisRule) { return !!luisRule; })
-                    .map(function (luisRule) { return ({
-                    score: intent.score,
-                    action: function () { return luisRule.action(input, luisResponse.entities); }
-                }); });
-            })
-                .take(1);
-        } // match the first intent from LUIS for which we supplied rule
-        ));
+        return new (BestMatchingLuisRule.bind.apply(BestMatchingLuisRule, [void 0, function (match) { return _this.match(match); }].concat(luisRules)))();
     };
-    LUIS.prototype.findEntity = function (entities, type) {
+    LuisModel.findEntity = function (entities, type) {
         return entities
             .filter(function (entity) { return entity.type === type; });
     };
-    LUIS.prototype.entityValues = function (entities, type) {
+    LuisModel.entityValues = function (entities, type) {
         return this.findEntity(entities, type)
             .map(function (entity) { return entity.entity; });
     };
-    return LUIS;
+    return LuisModel;
 }());
-exports.LUIS = LUIS;
+exports.LuisModel = LuisModel;
+var BestMatchingLuisRule = (function (_super) {
+    __extends(BestMatchingLuisRule, _super);
+    function BestMatchingLuisRule(matchModel) {
+        var luisRules = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            luisRules[_i - 1] = arguments[_i];
+        }
+        var _this = _super.call(this) || this;
+        _this.matchModel = matchModel;
+        _this.luisRules = luisRules;
+        return _this;
+    }
+    BestMatchingLuisRule.prototype.recognize = function (match) {
+        var _this = this;
+        return Rules_1.observize(this.matchModel(match))
+            .flatMap(function (m) {
+            return rxjs_1.Observable.from(m.luisResponse.intents)
+                .flatMap(function (luisIntent) {
+                return rxjs_1.Observable.of(_this.luisRules.find(function (luisRule) { return luisRule.intent === luisIntent.intent; }))
+                    .filter(function (luisRule) { return !!luisRule; })
+                    .map(function (luisRule) { return ({
+                    score: luisIntent.score,
+                    action: function () { return luisRule.handler(__assign({}, m, entityFields(m.luisResponse.entities))); }
+                }); });
+            }, 1)
+                .take(1);
+        } // stop with first intent that appears in the rules
+        );
+    };
+    return BestMatchingLuisRule;
+}(Rules_1.BaseRule));
 
 
 /***/ }),
@@ -11130,96 +11402,121 @@ exports.LUIS = LUIS;
 
 "use strict";
 
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+var __assign = (this && this.__assign) || Object.assign || function(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+    }
+    return t;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var Rules_1 = __webpack_require__(24);
-var rxjs_1 = __webpack_require__(15);
-var Prompts = (function () {
+var rxjs_1 = __webpack_require__(14);
+var Prompts = (function (_super) {
+    __extends(Prompts, _super);
     function Prompts(getPromptKey, setPromptKey) {
-        this.getPromptKey = getPromptKey;
-        this.setPromptKey = setPromptKey;
-        this.prompts = {};
+        var _this = _super.call(this) || this;
+        _this.getPromptKey = getPromptKey;
+        _this.setPromptKey = setPromptKey;
+        _this.prompts = {};
+        return _this;
     }
     Prompts.prototype.add = function (promptKey, prompt) {
         if (this.prompts[promptKey]) {
             console.warn("Prompt key " + promptKey + " already exists. Plese use a different key.");
             return;
         }
+        console.log("creating Prompt", promptKey);
         this.prompts[promptKey] = prompt;
     };
     // Prompt Creators
-    Prompts.prototype.text = function (text, action) {
+    Prompts.prototype.text = function (text, handler) {
         return {
-            rule: function (input) { return ({
-                action: function () { return action(input, input.text); }
-            }); },
-            creator: function (input) {
-                return input.reply(text);
+            recognizer: Rules_1.matchAll,
+            handler: handler,
+            creator: function (match) {
+                return match.reply(text);
             },
         };
     };
-    Prompts.prototype.choice = function (text, choices, action) {
-        return {
-            rule: function (input) {
-                return rxjs_1.Observable.of(choices.find(function (choice) { return choice.toLowerCase() === input.text.toLowerCase(); }))
-                    .filter(function (choice) { return !!choice !== undefined && choice != null; })
-                    .map(function (choice) { return ({
-                    action: function () { return action(input, choice); }
-                }); });
-            },
-            creator: function (input) {
-                return input.reply({
-                    type: 'message',
-                    from: { id: 'MyBot' },
-                    text: text,
-                    suggestedActions: { actions: choices.map(function (choice) { return ({
-                            type: 'postBack',
-                            title: choice,
-                            value: choice
-                        }); }) }
-                });
-            },
+    Prompts.prototype.matchChoice = function (choices) {
+        return function (match) {
+            return rxjs_1.Observable.of(choices.find(function (choice) { return choice.toLowerCase() === match.text.toLowerCase(); }))
+                .filter(function (choice) { return !!choice; })
+                .map(function (choice) { return (__assign({}, match, { // remove "as any" when TypeScript fixes this bug
+                choice: choice })); });
         };
     };
-    Prompts.prototype.confirm = function (text, action) {
-        var prompt = this.choice(text, ['Yes', 'No'], function (input, choice) {
-            return rxjs_1.Observable.of(choice)
-                .map(function (choice) { return ({
-                action: function () { return action(input, choice === 'Yes'); }
-            }); });
-        });
-        return {
-            rule: Rules_1.composeRule(prompt.rule),
-            creator: prompt.creator,
-        };
-    };
-    Prompts.prototype.rule = function () {
-        var _this = this;
-        return function (input) {
-            console.log("prompt looking for", _this.getPromptKey(input));
-            return rxjs_1.Observable.of(_this.getPromptKey(input))
-                .filter(function (promptKey) { return promptKey !== undefined; })
-                .map(function (promptKey) { return _this.prompts[promptKey]; })
-                .filter(function (ps) { return ps !== undefined; })
-                .flatMap(function (ps) {
-                return Rules_1.observize(ps.rule(input))
-                    .map(function (match) { return ({
-                    action: function () {
-                        _this.setPromptKey(input, undefined);
-                        return match.action();
-                    }
-                }); });
+    Prompts.prototype.createChoice = function (text, choices) {
+        return function (match) {
+            match.reply({
+                type: 'message',
+                from: { id: 'MyBot' },
+                text: text,
+                suggestedActions: { actions: choices.map(function (choice) { return ({
+                        type: 'postBack',
+                        title: choice,
+                        value: choice
+                    }); }) }
             });
         };
     };
+    Prompts.prototype.choice = function (text, choices, handler) {
+        return {
+            recognizer: this.matchChoice(choices),
+            handler: handler,
+            creator: this.createChoice(text, choices)
+        };
+    };
+    Prompts.prototype.matchConfirm = function () {
+        return function (match) { return (__assign({}, match, { confirm: match.choice === 'Yes' })); };
+    };
+    Prompts.prototype.confirm = function (text, handler) {
+        var choices = ['Yes', 'No'];
+        return {
+            recognizer: Rules_1.combineRecognizers(this.matchChoice(choices), this.matchConfirm()),
+            handler: handler,
+            creator: this.createChoice(text, choices)
+        };
+    };
+    Prompts.prototype.recognize = function (match) {
+        var _this = this;
+        return rxjs_1.Observable.of(this.getPromptKey(match))
+            .do(function (promptKey) { return console.log("promptKey", promptKey); })
+            .filter(function (promptKey) { return promptKey !== undefined; })
+            .map(function (promptKey) { return _this.prompts[promptKey]; })
+            .filter(function (prompt) { return prompt !== undefined; })
+            .flatMap(function (prompt) {
+            return Rules_1.observize(prompt.recognizer(match))
+                .map(function (m) { return ({
+                action: function () {
+                    _this.setPromptKey(match, undefined);
+                    return prompt.handler(m);
+                }
+            }); });
+        });
+    };
     Prompts.prototype.reply = function (promptKey) {
         var _this = this;
-        return function (input) {
-            _this.setPromptKey(input, promptKey);
-            return _this.prompts[promptKey].creator(input);
+        return function (match) {
+            console.log("prompts.reply", match);
+            _this.setPromptKey(match, promptKey);
+            return _this.prompts[promptKey].creator(match);
         };
     };
     return Prompts;
-}());
+}(Rules_1.BaseRule));
 exports.Prompts = Prompts;
 
 
@@ -11229,23 +11526,36 @@ exports.Prompts = Prompts;
 
 "use strict";
 
+var __assign = (this && this.__assign) || Object.assign || function(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+    }
+    return t;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-var rxjs_1 = __webpack_require__(15);
+var rxjs_1 = __webpack_require__(14);
 var Rules_1 = __webpack_require__(24);
 var RE = (function () {
     function RE() {
     }
-    // Either call as re(intent, action) or test([intent, intent, ...], action)
-    RE.prototype.rule = function (intents, action) {
-        return function (input) {
+    RE.prototype.match = function (intents) {
+        return function (match) {
             return rxjs_1.Observable.from(Rules_1.arrayize(intents))
-                .map(function (regexp) { return regexp.exec(input.text); })
-                .filter(function (groups) { return groups && groups[0] === input.text; })
+                .do(function (_) { return console.log("RegExp matching", match); })
+                .map(function (regexp) { return regexp.exec(match.text); })
+                .do(function (groups) { return console.log("RegExp result", groups); })
+                .filter(function (groups) { return groups && groups[0] === match.text; })
                 .take(1)
-                .map(function (groups) { return ({
-                action: function () { return action(input, { groups: groups }); }
-            }); });
+                .do(function (groups) { return console.log("RegExp match!", groups); })
+                .map(function (groups) { return (__assign({}, match, { // remove "as any" when TypeScript fixes this bug,
+                groups: groups })); });
         };
+    };
+    // Either call as rule(intent, action) or rule([intent, intent, ...], action)
+    RE.prototype.rule = function (intents, handler) {
+        return new Rules_1.SimpleRule(this.match(intents), handler);
     };
     return RE;
 }());
@@ -11257,8 +11567,8 @@ exports.RE = RE;
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__compose__ = __webpack_require__(55);
 /* harmony export (immutable) */ __webpack_exports__["a"] = applyMiddleware;
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__compose__ = __webpack_require__(55);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 
@@ -11367,10 +11677,10 @@ function bindActionCreators(actionCreators, dispatch) {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__createStore__ = __webpack_require__(56);
+/* WEBPACK VAR INJECTION */(function(process) {/* harmony export (immutable) */ __webpack_exports__["a"] = combineReducers;
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__createStore__ = __webpack_require__(56);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_lodash_es_isPlainObject__ = __webpack_require__(48);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__utils_warning__ = __webpack_require__(57);
-/* harmony export (immutable) */ __webpack_exports__["a"] = combineReducers;
 
 
 
@@ -12826,7 +13136,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var Observable_1 = __webpack_require__(0);
 var ScalarObservable_1 = __webpack_require__(40);
-var EmptyObservable_1 = __webpack_require__(14);
+var EmptyObservable_1 = __webpack_require__(15);
 /**
  * We need this JSDoc comment for affecting ESDoc.
  * @extends {Ignored}
@@ -13637,7 +13947,7 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var Observable_1 = __webpack_require__(0);
-var EmptyObservable_1 = __webpack_require__(14);
+var EmptyObservable_1 = __webpack_require__(15);
 var isArray_1 = __webpack_require__(12);
 var subscribeToResult_1 = __webpack_require__(3);
 var OuterSubscriber_1 = __webpack_require__(2);
@@ -15438,7 +15748,7 @@ exports.webSocket = WebSocketSubject_1.WebSocketSubject.create;
 
 "use strict";
 
-var EmptyObservable_1 = __webpack_require__(14);
+var EmptyObservable_1 = __webpack_require__(15);
 exports.empty = EmptyObservable_1.EmptyObservable.create;
 
 
@@ -18023,7 +18333,7 @@ var Subscriber_1 = __webpack_require__(1);
  * an Observable that is identical to the source.
  *
  * <span class="informal">Intercepts each emission on the source and runs a
- * function, but returns an output which is identical to the source.</span>
+ * function, but returns an output which is identical to the source as long as errors don't occur.</span>
  *
  * <img src="./img/do.png" width="100%">
  *
@@ -20203,7 +20513,7 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var Subscriber_1 = __webpack_require__(1);
-var EmptyObservable_1 = __webpack_require__(14);
+var EmptyObservable_1 = __webpack_require__(15);
 /**
  * Returns an Observable that repeats the stream of items emitted by the source Observable at most count times.
  *
@@ -21388,7 +21698,7 @@ var SkipWhileSubscriber = (function (_super) {
 
 var ArrayObservable_1 = __webpack_require__(11);
 var ScalarObservable_1 = __webpack_require__(40);
-var EmptyObservable_1 = __webpack_require__(14);
+var EmptyObservable_1 = __webpack_require__(15);
 var concat_1 = __webpack_require__(42);
 var isScheduler_1 = __webpack_require__(13);
 /* tslint:enable:max-line-length */
@@ -21871,7 +22181,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var Subscriber_1 = __webpack_require__(1);
 var ArgumentOutOfRangeError_1 = __webpack_require__(29);
-var EmptyObservable_1 = __webpack_require__(14);
+var EmptyObservable_1 = __webpack_require__(15);
 /**
  * Emits only the first `count` values emitted by the source Observable.
  *
@@ -21966,7 +22276,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var Subscriber_1 = __webpack_require__(1);
 var ArgumentOutOfRangeError_1 = __webpack_require__(29);
-var EmptyObservable_1 = __webpack_require__(14);
+var EmptyObservable_1 = __webpack_require__(15);
 /**
  * Emits only the last `count` values emitted by the source Observable.
  *
@@ -22707,7 +23017,7 @@ var root_1 = __webpack_require__(7);
  * @example
  * // Using normal ES2015
  * let source = Rx.Observable
- *   .just(42)
+ *   .of(42)
  *   .toPromise();
  *
  * source.then((value) => console.log('Value: %s', value));
@@ -22736,7 +23046,7 @@ var root_1 = __webpack_require__(7);
  *
  * // Setting via the method
  * let source = Rx.Observable
- *   .just(42)
+ *   .of(42)
  *   .toPromise(RSVP.Promise);
  *
  * source.then((value) => console.log('Value: %s', value));

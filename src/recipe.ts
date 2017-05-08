@@ -40,7 +40,7 @@ interface NutritionInformation {
 }
 
 import { Observable } from 'rxjs';
-import { UniversalChat, Message, CardAction, Address, getAddress, IChatInput, WebChatConnector,  RE, REArgs } from 'prague';
+import { UniversalChat, Message, CardAction, Address, getAddress, WebChatConnector, RE, IRegExpMatch } from 'prague';
 
 const webChat = new WebChatConnector()
 window["browserBot"] = webChat.botConnection;
@@ -57,7 +57,7 @@ interface RecipeState {
     promptKey: string
 }
 
-import { ChatState, ReduxChat, IReduxChatInput } from 'prague';
+import { ChatState, ReduxChat, IReduxMessageMatch } from 'prague';
 
 type RecipeBotData = ChatState<undefined, undefined, undefined, undefined, RecipeState>;
 
@@ -65,7 +65,7 @@ interface AppState {
     bot: RecipeBotData;
 }
 
-type RecipeBotInput = IReduxChatInput<AppState, RecipeBotData>;
+type RecipeBotInput = IReduxMessageMatch<AppState, RecipeBotData>;
 
 type RecipeAction = {
     type: 'Set_Recipe',
@@ -127,37 +127,37 @@ const store = createStore(
 
 const recipeBotChat = new ReduxChat(new UniversalChat(webChat.chatConnector), store, state => state.bot);
 
-import { doRule, Action, Queries, firstMatch, filter, Match, reply } from 'prague';
+import { Handler, Match, Predicate, Predicates, reply, first, filter, prepend } from 'prague';
 
 // Prompts
 
 import { Prompts } from 'prague';
 
 const prompts = new Prompts<RecipeBotInput>(
-    (input) => input.data.userInConversation.promptKey,
-    (input, promptKey) => input.store.dispatch<RecipeAction>({ type: 'Set_PromptKey', promptKey })
+    (match) => match.data.userInConversation.promptKey,
+    (match, promptKey) => match.store.dispatch<RecipeAction>({ type: 'Set_PromptKey', promptKey })
 );
 
 const cheeses = ['Cheddar', 'Wensleydale', 'Brie', 'Velveeta'];
 
-prompts.add('Favorite_Color', prompts.text("What is your favorite color?", (input, text) =>
-    input.reply(text === "blue" ? "That is correct!" : "That is incorrect")));
+prompts.add('Favorite_Color', prompts.text("What is your favorite color?", (match) =>
+    match.reply(match.text === "blue" ? "That is correct!" : "That is incorrect")));
 
-prompts.add('Favorite_Cheese', prompts.choice("What is your favorite cheese?", cheeses, (input, choice) =>
-    input.reply(choice === "Velveeta" ? "Ima let you finish but FYI that is not really cheese." : "Interesting.")));
+prompts.add('Favorite_Cheese', prompts.choice("What is your favorite cheese?", cheeses, (match) =>
+    match.reply(match.choice === "Velveeta" ? "Ima let you finish but FYI that is not really cheese." : "Interesting.")));
 
-prompts.add('Like_Cheese', prompts.confirm("Do you like cheese?", (input, confirm) =>
-    input.reply(confirm ? "That is correct." : "That is incorrect.")));
+prompts.add('Like_Cheese', prompts.confirm("Do you like cheese?", (match) =>
+    match.reply(match.confirm ? "That is correct." : "That is incorrect.")));
 
 // Intents
 
 // Message actions
 
-const chooseRecipe = (input: RecipeBotInput, args: REArgs) => {
-    const name = args.groups[1];
+const chooseRecipe: Handler<RecipeBotInput & IRegExpMatch> = (match) => {
+    const name = match.groups[1];
     const recipe = recipeFromName(name);
     if (recipe) {
-        input.store.dispatch<RecipeAction>({ type: 'Set_Recipe', recipe });
+        match.store.dispatch<RecipeAction>({ type: 'Set_Recipe', recipe });
 
         return Observable.from([
             `Great, let's make ${name} which ${recipe.recipeYield.toLowerCase()}!`,
@@ -166,45 +166,51 @@ const chooseRecipe = (input: RecipeBotInput, args: REArgs) => {
             "Let me know when you're ready to go."
         ])
         .zip(Observable.timer(0, 1000), x => x) // Right now we're having trouble introducing delays
-        .do(ingredient => input.reply(ingredient))
+        .do(ingredient => match.reply(ingredient))
         .count();
     } else {
-        return input.replyAsync(`Sorry, I don't know how to make ${name}. Maybe one day you can teach me.`);
+        return match.replyAsync(`Sorry, I don't know how to make ${name}. Maybe one day you can teach me.`);
     }
 }
 
-const queryQuantity: Action<RecipeBotInput> = (input, args: REArgs) => {
-    const ingredientQuery = args.groups[1].split('');
+const queryQuantity: Handler<RecipeBotInput & IRegExpMatch> = (match) => {
+    const ingredientQuery = match.groups[1].split('');
 
-    const ingredient = input.data.userInConversation.recipe.recipeIngredient
+    const ingredient = match.data.userInConversation.recipe.recipeIngredient
         .map<[string, number]>(i => [i, lcs(i.split(''), ingredientQuery).length])
         .reduce((prev, curr) => prev[1] > curr[1] ? prev : curr)
         [0];
 
-    input.reply(ingredient);
+    match.reply(ingredient);
 }
 
-const nextInstruction: Action<RecipeBotInput> = (input, args: REArgs) => {
-    const nextInstruction = input.data.userInConversation.lastInstructionSent + 1;
-    if (nextInstruction < input.data.userInConversation.recipe.recipeInstructions.length)
-        sayInstruction(input, { instruction: nextInstruction });
+const nextInstruction: Handler<RecipeBotInput & IRegExpMatch> = (match) => {
+    const nextInstruction = match.data.userInConversation.lastInstructionSent + 1;
+    if (nextInstruction < match.data.userInConversation.recipe.recipeInstructions.length)
+        sayInstruction({
+            ... match,
+            instruction: nextInstruction
+        });
     else
-        input.reply("That's it!");
+        match.reply("That's it!");
 }
 
-const previousInstruction: Action<RecipeBotInput> = (input, args: REArgs) => {
-    const prevInstruction = input.data.userInConversation.lastInstructionSent - 1;
+const previousInstruction: Handler<RecipeBotInput & IRegExpMatch> = (match) => {
+    const prevInstruction = match.data.userInConversation.lastInstructionSent - 1;
     if (prevInstruction >= 0)
-        sayInstruction(input, { instruction: prevInstruction });
+        sayInstruction({
+            ... match,
+            instruction: prevInstruction 
+        });
     else
-        input.reply("We're at the beginning.");
+        match.reply("We're at the beginning.");
 }
 
-const sayInstruction: Action<RecipeBotInput> = (input, args: { instruction: number }) => {
-    input.reply(input.data.userInConversation.recipe.recipeInstructions[args.instruction]);
-    if (input.data.userInConversation.recipe.recipeInstructions.length === args.instruction + 1)
-        input.reply("That's it!");
-    store.dispatch<RecipeAction>({ type: 'Set_Instruction', instruction: args.instruction });
+const sayInstruction: Handler<RecipeBotInput & { instruction: number }> = (match) => {
+    match.reply(match.data.userInConversation.recipe.recipeInstructions[match.instruction]);
+    if (match.data.userInConversation.recipe.recipeInstructions.length === match.instruction + 1)
+        match.reply("That's it!");
+    store.dispatch<RecipeAction>({ type: 'Set_Instruction', instruction: match.instruction });
 }
 
 // const globalDefaultRule = defaultRule(reply("I can't understand you. It's you, not me. Get it together and try again."));
@@ -212,9 +218,9 @@ const sayInstruction: Action<RecipeBotInput> = (input, args: { instruction: numb
 const recipeFromName = (name: string) =>
     recipes.find(recipe => recipe.name.toLowerCase() === name.toLowerCase());
 
-const queries: Queries<RecipeBotInput> = {
-    noRecipe: (input) => !input.data.userInConversation.recipe,
-    noInstructionsSent: (input) => input.data.userInConversation.lastInstructionSent === undefined,
+const filters: Predicates<RecipeBotInput> = {
+    noRecipe: (match) => !match.data.userInConversation.recipe,
+    noInstructionsSent: (match) => match.data.userInConversation.lastInstructionSent === undefined,
 }
 
 // RegExp
@@ -239,17 +245,17 @@ const re = new RE<RecipeBotInput>();
 
 // LUIS
 
-import { LUIS, LuisEntity } from 'prague';
+import { LuisModel, LuisEntity } from 'prague';
 
-const luis = new LUIS<RecipeBotInput>('id', 'key', .5);
+const luis = new LuisModel<RecipeBotInput>('id', 'key', .5);
 
-const recipeRule = firstMatch<RecipeBotInput>(
+const recipeRule = first<RecipeBotInput>(
 
     // Prompts
-    prompts.rule(),
+    prompts,
 
     // For testing Prompts
-    firstMatch(
+    first(
         re.rule(intents.askQuestion, prompts.reply('Favorite_Color')),
         re.rule(intents.askYorNQuestion, prompts.reply('Like_Cheese')),
         re.rule(intents.askChoiceQuestion, prompts.reply('Favorite_Cheese'))
@@ -257,13 +263,13 @@ const recipeRule = firstMatch<RecipeBotInput>(
 
     // For testing LUIS
 
-    luis.bestMatch(
-        luis.intent('singASong', (input, entities) => input.reply(`Let's sing ${luis.entityValues(entities, 'song')[0]}`)),
-        luis.intent('findSomething', (input, entities) => input.reply(`Okay let's find a ${luis.entityValues(entities, 'what')[0]} in ${luis.entityValues(entities, 'where')[0]}`))
+    luis.best(
+        luis.rule('singASong', (match) => match.reply(`Let's sing ${match.entityValues('song')[0]}`)),
+        luis.rule('findSomething', (match) => match.reply(`Okay let's find a ${match.entityValues('what')[0]} in ${match.entityValues('where')[0]}`))
     ),
 
     // If there is no recipe, we have to pick one
-    filter(queries.noRecipe, firstMatch(
+    filter(filters.noRecipe, first(
         re.rule(intents.chooseRecipe, chooseRecipe),
         re.rule([intents.queryQuantity, intents.instructions.start, intents.instructions.restart], reply("First please choose a recipe")),
         re.rule(intents.all, chooseRecipe)
@@ -273,25 +279,20 @@ const recipeRule = firstMatch<RecipeBotInput>(
     re.rule(intents.queryQuantity, queryQuantity), // TODO: conversions go here
 
     // If we haven't started listing instructions, wait for the user to tell us to start
-    filter(queries.noInstructionsSent,
-        re.rule([intents.instructions.start, intents.instructions.next], (input, args) => sayInstruction(input, { instruction: 0 }))
+    filter(filters.noInstructionsSent,
+        re.rule([intents.instructions.start, intents.instructions.next], (match) => sayInstruction({ ... match, instruction: 0 }))
     ),
 
     // We are listing instructions. Let the user navigate among them.
-    firstMatch(
+    first(
         re.rule(intents.instructions.next, nextInstruction),
-        re.rule(intents.instructions.repeat, (input, args) => sayInstruction(input, { instruction: input.data.userInConversation.lastInstructionSent })),
+        re.rule(intents.instructions.repeat, (match) => sayInstruction({ ... match, instruction: match.data.userInConversation.lastInstructionSent })),
         re.rule(intents.instructions.previous, previousInstruction),
-        re.rule(intents.instructions.restart, (input, args) => sayInstruction(input, { instruction: 0 })),
+        re.rule(intents.instructions.restart, (match) => sayInstruction({ ... match, instruction: 0 })),
         // globalDefaultRule
     )
 );
 
-recipeBotChat.input$
-.do(input => console.log("message", input.message))
-.do(input => console.log("state before", input.state))
-.flatMap(input =>
-    doRule(input, recipeRule)
-    .do(_ => console.log("state after", input.store.getState()))
-)
-.subscribe();
+recipeBotChat.run({
+    messages: recipeRule
+});
