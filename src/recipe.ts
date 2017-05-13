@@ -40,7 +40,7 @@ interface NutritionInformation {
 }
 
 import { Observable } from 'rxjs';
-import { UniversalChat, Message, CardAction, Address, getAddress, WebChatConnector, RE, IRegExpMatch } from 'prague';
+import { UniversalChat, Message, CardAction, Address, getAddress, WebChatConnector, RegExpHelpers, IRegExpMatch } from 'prague';
 
 const webChat = new WebChatConnector()
 window["browserBot"] = webChat.botConnection;
@@ -57,7 +57,7 @@ interface RecipeState {
     promptKey: string
 }
 
-import { ChatState, ReduxChat, IReduxMessageMatch } from 'prague';
+import { ChatState, ReduxChat, IReduxMatch, IChatMessageMatch } from 'prague';
 
 type RecipeBotData = ChatState<undefined, undefined, undefined, undefined, RecipeState>;
 
@@ -65,7 +65,7 @@ interface AppState {
     bot: RecipeBotData;
 }
 
-type RecipeBotInput = IReduxMessageMatch<AppState, RecipeBotData>;
+type RecipeBotMatch = IReduxMatch<AppState, RecipeBotData> & IChatMessageMatch;
 
 type RecipeAction = {
     type: 'Set_Recipe',
@@ -127,13 +127,15 @@ const store = createStore(
 
 const recipeBotChat = new ReduxChat(new UniversalChat(webChat.chatConnector), store, state => state.bot);
 
-import { Handler, Match, Predicate, Predicates, reply, first, filter, prepend } from 'prague';
+import { Handler, Match, Predicate, Predicates, reply, Helpers } from 'prague';
+
+const { first, filter } = Helpers<RecipeBotMatch>();
 
 // Prompts
 
-import { Prompts } from 'prague';
+import { ChatPrompts } from 'prague';
 
-const prompts = new Prompts<RecipeBotInput>(
+const prompts = new ChatPrompts<RecipeBotMatch>(
     (match) => match.data.userInConversation.promptKey,
     (match, promptKey) => match.store.dispatch<RecipeAction>({ type: 'Set_PromptKey', promptKey })
 );
@@ -153,7 +155,7 @@ prompts.add('Like_Cheese', prompts.confirm("Do you like cheese?", (match) =>
 
 // Message actions
 
-const chooseRecipe: Handler<RecipeBotInput & IRegExpMatch> = (match) => {
+const chooseRecipe: Handler<RecipeBotMatch & IRegExpMatch> = (match) => {
     const name = match.groups[1];
     const recipe = recipeFromName(name);
     if (recipe) {
@@ -173,7 +175,7 @@ const chooseRecipe: Handler<RecipeBotInput & IRegExpMatch> = (match) => {
     }
 }
 
-const queryQuantity: Handler<RecipeBotInput & IRegExpMatch> = (match) => {
+const queryQuantity: Handler<RecipeBotMatch & IRegExpMatch> = (match) => {
     const ingredientQuery = match.groups[1].split('');
 
     const ingredient = match.data.userInConversation.recipe.recipeIngredient
@@ -184,7 +186,7 @@ const queryQuantity: Handler<RecipeBotInput & IRegExpMatch> = (match) => {
     match.reply(ingredient);
 }
 
-const nextInstruction: Handler<RecipeBotInput & IRegExpMatch> = (match) => {
+const nextInstruction: Handler<RecipeBotMatch & IRegExpMatch> = (match) => {
     const nextInstruction = match.data.userInConversation.lastInstructionSent + 1;
     if (nextInstruction < match.data.userInConversation.recipe.recipeInstructions.length)
         sayInstruction({
@@ -195,7 +197,7 @@ const nextInstruction: Handler<RecipeBotInput & IRegExpMatch> = (match) => {
         match.reply("That's it!");
 }
 
-const previousInstruction: Handler<RecipeBotInput & IRegExpMatch> = (match) => {
+const previousInstruction: Handler<RecipeBotMatch & IRegExpMatch> = (match) => {
     const prevInstruction = match.data.userInConversation.lastInstructionSent - 1;
     if (prevInstruction >= 0)
         sayInstruction({
@@ -206,7 +208,7 @@ const previousInstruction: Handler<RecipeBotInput & IRegExpMatch> = (match) => {
         match.reply("We're at the beginning.");
 }
 
-const sayInstruction: Handler<RecipeBotInput & { instruction: number }> = (match) => {
+const sayInstruction: Handler<RecipeBotMatch & { instruction: number }> = (match) => {
     match.reply(match.data.userInConversation.recipe.recipeInstructions[match.instruction]);
     if (match.data.userInConversation.recipe.recipeInstructions.length === match.instruction + 1)
         match.reply("That's it!");
@@ -218,7 +220,7 @@ const sayInstruction: Handler<RecipeBotInput & { instruction: number }> = (match
 const recipeFromName = (name: string) =>
     recipes.find(recipe => recipe.name.toLowerCase() === name.toLowerCase());
 
-const filters: Predicates<RecipeBotInput> = {
+const filters: Predicates<RecipeBotMatch> = {
     noRecipe: (match) => !match.data.userInConversation.recipe,
     noInstructionsSent: (match) => match.data.userInConversation.lastInstructionSent === undefined,
 }
@@ -241,24 +243,24 @@ const intents = {
     all: /(.*)/i
 }
 
-const re = new RE<RecipeBotInput>();
+const { re } = RegExpHelpers<RecipeBotMatch>();
 
 // LUIS
 
 import { LuisModel, LuisEntity } from 'prague';
 
-const luis = new LuisModel<RecipeBotInput>('id', 'key', .5);
+const luis = new LuisModel<RecipeBotMatch>('id', 'key', .5);
 
-const recipeRule = first<RecipeBotInput>(
+const recipeRule = first(
 
     // Prompts
     prompts,
 
     // For testing Prompts
     first(
-        re.rule(intents.askQuestion, prompts.reply('Favorite_Color')),
-        re.rule(intents.askYorNQuestion, prompts.reply('Like_Cheese')),
-        re.rule(intents.askChoiceQuestion, prompts.reply('Favorite_Cheese'))
+        re(intents.askQuestion, prompts.replyWithPrompt('Favorite_Color')),
+        re(intents.askYorNQuestion, prompts.replyWithPrompt('Like_Cheese')),
+        re(intents.askChoiceQuestion, prompts.replyWithPrompt('Favorite_Cheese'))
     ),
 
     // For testing LUIS
@@ -270,29 +272,29 @@ const recipeRule = first<RecipeBotInput>(
 
     // If there is no recipe, we have to pick one
     filter(filters.noRecipe, first(
-        re.rule(intents.chooseRecipe, chooseRecipe),
-        re.rule([intents.queryQuantity, intents.instructions.start, intents.instructions.restart], reply("First please choose a recipe")),
-        re.rule(intents.all, chooseRecipe)
+        re(intents.chooseRecipe, chooseRecipe),
+        re([intents.queryQuantity, intents.instructions.start, intents.instructions.restart], reply("First please choose a recipe")),
+        re(intents.all, chooseRecipe)
     )),
 
     // Now that we have a recipe, these can happen at any time
-    re.rule(intents.queryQuantity, queryQuantity), // TODO: conversions go here
+    re(intents.queryQuantity, queryQuantity), // TODO: conversions go here
 
     // If we haven't started listing instructions, wait for the user to tell us to start
     filter(filters.noInstructionsSent,
-        re.rule([intents.instructions.start, intents.instructions.next], (match) => sayInstruction({ ... match, instruction: 0 }))
+        re([intents.instructions.start, intents.instructions.next], (match) => sayInstruction({ ... match, instruction: 0 }))
     ),
 
     // We are listing instructions. Let the user navigate among them.
     first(
-        re.rule(intents.instructions.next, nextInstruction),
-        re.rule(intents.instructions.repeat, (match) => sayInstruction({ ... match, instruction: match.data.userInConversation.lastInstructionSent })),
-        re.rule(intents.instructions.previous, previousInstruction),
-        re.rule(intents.instructions.restart, (match) => sayInstruction({ ... match, instruction: 0 })),
+        re(intents.instructions.next, nextInstruction),
+        re(intents.instructions.repeat, (match) => sayInstruction({ ... match, instruction: match.data.userInConversation.lastInstructionSent })),
+        re(intents.instructions.previous, previousInstruction),
+        re(intents.instructions.restart, (match) => sayInstruction({ ... match, instruction: 0 })),
         // globalDefaultRule
     )
 );
 
 recipeBotChat.run({
-    messages: recipeRule
+    message: recipeRule
 });
