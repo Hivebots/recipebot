@@ -40,7 +40,7 @@ interface NutritionInformation {
 }
 
 import { Observable } from 'rxjs';
-import { UniversalChat, Message, CardAction, Address, getAddress, WebChatConnector, RegExpHelpers, IRegExpMatch } from 'prague';
+import { UniversalChat, WebChatConnector, RegExpHelpers, IRegExpMatch } from 'prague';
 
 const webChat = new WebChatConnector()
 window["browserBot"] = webChat.botConnection;
@@ -129,27 +129,30 @@ const recipeBotChat = new ReduxChat(new UniversalChat(webChat.chatConnector), st
 
 import { Handler, Match, Predicate, Predicates, reply, Helpers } from 'prague';
 
-const { first, filter } = Helpers<RecipeBotMatch>();
+const { first, filter, rule } = Helpers<RecipeBotMatch>();
 
 // Prompts
 
-import { ChatPrompts } from 'prague';
+import { TextPrompts, createChoice, createConfirm } from 'prague';
 
-const prompts = new ChatPrompts<RecipeBotMatch>(
+const prompts = new TextPrompts<RecipeBotMatch>(
     (match) => match.data.userInConversation.promptKey,
     (match, promptKey) => match.store.dispatch<RecipeAction>({ type: 'Set_PromptKey', promptKey })
 );
 
 const cheeses = ['Cheddar', 'Wensleydale', 'Brie', 'Velveeta'];
 
-prompts.add('Favorite_Color', prompts.text("What is your favorite color?", (match) =>
-    match.reply(match.text === "blue" ? "That is correct!" : "That is incorrect")));
+prompts.add('Favorite_Color', rule(match =>
+    match.reply(match.text === "blue" ? "That is correct!" : "That is incorrect")
+));
 
-prompts.add('Favorite_Cheese', prompts.choice("What is your favorite cheese?", cheeses, (match) =>
-    match.reply(match.choice === "Velveeta" ? "Ima let you finish but FYI that is not really cheese." : "Interesting.")));
+prompts.add('Favorite_Cheese', prompts.choice(cheeses, match =>
+    match.reply(match.choice ===  "Velveeta" ? "Ima let you finish but FYI that is not really cheese." : "Interesting.")
+));
 
-prompts.add('Like_Cheese', prompts.confirm("Do you like cheese?", (match) =>
-    match.reply(match.confirm ? "That is correct." : "That is incorrect.")));
+prompts.add('Like_Cheese', prompts.confirm(match =>
+    match.reply(match.confirm ? "That is correct." : "That is incorrect.")
+));
 
 // Intents
 
@@ -258,9 +261,18 @@ const recipeRule = first(
 
     // For testing Prompts
     first(
-        re(intents.askQuestion, prompts.replyWithPrompt('Favorite_Color')),
-        re(intents.askYorNQuestion, prompts.replyWithPrompt('Like_Cheese')),
-        re(intents.askChoiceQuestion, prompts.replyWithPrompt('Favorite_Cheese'))
+        re(intents.askQuestion, match => {
+            prompts.setPrompt(match, 'Favorite_Color');
+            match.reply("What is your favorite color?");
+        }),
+        re(intents.askYorNQuestion, match => {
+            prompts.setPrompt(match, 'Like_Cheese');
+            match.reply(createConfirm("Do you like cheese?"));
+        }),
+        re(intents.askChoiceQuestion, match => {
+            prompts.setPrompt(match, 'Favorite_Cheese');
+            match.reply(createChoice("What is your favorite cheese?", cheeses));
+        })
     ),
 
     // For testing LUIS
