@@ -1735,6 +1735,9 @@ exports.observize = function (t) {
         return rxjs_1.Observable.fromPromise(t).filter(function (i) { return !!i; });
     return rxjs_1.Observable.of(t);
 };
+exports.ruleize = function (r) {
+    return ((r.tryMatch) ? r : new SimpleRule(r));
+};
 var BaseRule = (function () {
     function BaseRule() {
     }
@@ -1755,6 +1758,7 @@ function combineMatchers() {
     for (var _i = 0; _i < arguments.length; _i++) {
         args[_i] = arguments[_i];
     }
+    console.log("combineMatchers", args);
     return function (match) {
         return rxjs_1.Observable.from(args)
             .reduce(function (prevObservable, currentMatcher, i) {
@@ -1776,6 +1780,7 @@ var SimpleRule = (function (_super) {
             args[_i] = arguments[_i];
         }
         var _this = _super.call(this) || this;
+        _this.matchers = [];
         if (args.length < 1) {
             console.error("rules must at least have a handler");
             return _this;
@@ -1787,8 +1792,8 @@ var SimpleRule = (function (_super) {
     }
     SimpleRule.prototype.tryMatch = function (match) {
         var _this = this;
-        console.log("trying to match a rule");
-        return this.matchers
+        console.log("SimpleRule.tryMatch", this.matchers);
+        return this.matchers.length
             ? combineMatchers.apply(void 0, this.matchers)(match)
                 .do(function (m) { return console.log("match", m); })
                 .map(function (m) { return ({
@@ -1801,6 +1806,7 @@ var SimpleRule = (function (_super) {
             });
     };
     SimpleRule.prototype.prependMatcher = function (matcher) {
+        console.log("SimpleRule.prependMatcher", matcher);
         return new (SimpleRule.bind.apply(SimpleRule, [void 0, matcher].concat(this.matchers, [this.handler])))();
     };
     return SimpleRule;
@@ -1815,7 +1821,7 @@ var FirstMatchingRule = (function (_super) {
         }
         var _this = _super.call(this) || this;
         console.log("FirstMatchingRule.constructor: rules", rules);
-        _this.rule$ = rxjs_1.Observable.from(rules).filter(function (rule) { return !!rule; });
+        _this.rule$ = rxjs_1.Observable.from(rules).filter(function (rule) { return !!rule; }).map(function (rule) { return exports.ruleize(rule); });
         return _this;
     }
     FirstMatchingRule.prototype.tryMatch = function (match) {
@@ -1887,7 +1893,7 @@ exports.Helpers = function () {
         };
     };
     var filter = function (predicate, rule) {
-        return rule.prependMatcher(matchPredicate(predicate));
+        return exports.ruleize(rule).prependMatcher(matchPredicate(predicate));
     };
     function prepend() {
         var args = [];
@@ -7859,7 +7865,7 @@ var store = redux_1.createStore(redux_1.combineReducers({
 }));
 var recipeBotChat = new prague_2.ReduxChat(new prague_1.UniversalChat(webChat.chatConnector), store, function (state) { return state.bot; });
 var prague_3 = __webpack_require__(10);
-var _a = prague_3.Helpers(), first = _a.first, filter = _a.filter, rule = _a.rule;
+var _a = prague_3.Helpers(), first = _a.first, filter = _a.filter, rule = _a.rule, run = _a.run;
 // Prompts
 var prague_4 = __webpack_require__(10);
 var prompts = new prague_4.TextPrompts(function (match) { return match.data.userInConversation.promptKey; }, function (match, promptKey) { return match.store.dispatch({ type: 'Set_PromptKey', promptKey: promptKey }); });
@@ -7972,7 +7978,7 @@ re(intents.queryQuantity, queryQuantity), // TODO: conversions go here
 // If we haven't started listing instructions, wait for the user to tell us to start
 filter(filters.noInstructionsSent, re([intents.instructions.start, intents.instructions.next], function (match) { return sayInstruction(__assign({}, match, { instruction: 0 })); })), 
 // We are listing instructions. Let the user navigate among them.
-first(re(intents.instructions.next, nextInstruction), re(intents.instructions.repeat, function (match) { return sayInstruction(__assign({}, match, { instruction: match.data.userInConversation.lastInstructionSent })); }), re(intents.instructions.previous, previousInstruction), re(intents.instructions.restart, function (match) { return sayInstruction(__assign({}, match, { instruction: 0 })); })));
+first(re(intents.instructions.next, nextInstruction), re(intents.instructions.repeat, function (match) { return sayInstruction(__assign({}, match, { instruction: match.data.userInConversation.lastInstructionSent })); }), re(intents.instructions.previous, previousInstruction), re(intents.instructions.restart, function (match) { return sayInstruction(__assign({}, match, { instruction: 0 })); })), prague_3.reply("Honestly I have no idea what you're talking about."));
 recipeBotChat.run({
     message: recipeRule
 });

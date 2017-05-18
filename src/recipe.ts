@@ -129,7 +129,7 @@ const recipeBotChat = new ReduxChat(new UniversalChat(webChat.chatConnector), st
 
 import { Handler, Match, Predicate, Predicates, reply, Helpers } from 'prague';
 
-const { first, filter, rule } = Helpers<RecipeBotMatch>();
+const { first, filter, rule, run } = Helpers<RecipeBotMatch>();
 
 // Prompts
 
@@ -304,7 +304,9 @@ const recipeRule = first(
         re(intents.instructions.previous, previousInstruction),
         re(intents.instructions.restart, (match) => sayInstruction({ ... match, instruction: 0 })),
         // globalDefaultRule
-    )
+    ),
+
+    reply("Honestly I have no idea what you're talking about.")
 );
 
 recipeBotChat.run({
