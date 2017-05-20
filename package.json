@@ -22,6 +22,6 @@
   "dependencies": {
     "convert-units": "^2.2.0",
     "longest-common-substring": "0.0.1",
-    "prague": "0.5.3"
+    "prague": "0.5.4"
   }
 }
