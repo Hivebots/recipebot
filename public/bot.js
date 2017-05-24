@@ -1884,40 +1884,33 @@ var RunRule = (function (_super) {
     return RunRule;
 }(BaseRule));
 exports.RunRule = RunRule;
-exports.Helpers = function () {
-    // helpers are first defined as local variables so that they can call each other if necessary
-    function rule() {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
-        }
-        var ruleOrHandler = args[args.length - 1];
-        if (isRule(ruleOrHandler)) {
-            switch (args.length) {
-                case 1:
-                    return ruleOrHandler;
-                case 2:
-                    return ruleOrHandler.prependMatcher(args[0]);
-                default:
-                    return ruleOrHandler.prependMatcher(combineMatchers.apply(void 0, args.slice(0, args.length - 1)));
-            }
-        }
-        return new (SimpleRule.bind.apply(SimpleRule, [void 0].concat(args)))();
+function rule() {
+    var args = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        args[_i] = arguments[_i];
     }
-    var first = function () {
-        var rules = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            rules[_i] = arguments[_i];
+    var ruleOrHandler = args[args.length - 1];
+    if (isRule(ruleOrHandler)) {
+        switch (args.length) {
+            case 1:
+                return ruleOrHandler;
+            case 2:
+                return ruleOrHandler.prependMatcher(args[0]);
+            default:
+                return ruleOrHandler.prependMatcher(combineMatchers.apply(void 0, args.slice(0, args.length - 1)));
         }
-        return new (FirstMatchingRule.bind.apply(FirstMatchingRule, [void 0].concat(rules)))();
-    };
-    var run = function (handler) { return new RunRule(handler); };
-    return {
-        rule: rule,
-        first: first,
-        run: run
-    };
+    }
+    return new (SimpleRule.bind.apply(SimpleRule, [void 0].concat(args)))();
+}
+exports.rule = rule;
+exports.first = function () {
+    var rules = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        rules[_i] = arguments[_i];
+    }
+    return new (FirstMatchingRule.bind.apply(FirstMatchingRule, [void 0].concat(rules)))();
 };
+exports.run = function (handler) { return new RunRule(handler); };
 
 
 /***/ }),
@@ -7871,12 +7864,11 @@ var store = redux_1.createStore(redux_1.combineReducers({
 }));
 var recipeBotChat = new prague_2.ReduxChat(new prague_1.UniversalChat(webChat.chatConnector), store, function (state) { return state.bot; });
 var prague_3 = __webpack_require__(10);
-var _a = prague_3.Helpers(), first = _a.first, rule = _a.rule, run = _a.run;
 // Prompts
 var prague_4 = __webpack_require__(10);
 var prompts = new prague_4.TextPrompts(function (match) { return match.data.userInConversation.promptKey; }, function (match, promptKey) { return match.store.dispatch({ type: 'Set_PromptKey', promptKey: promptKey }); });
 var cheeses = ['Cheddar', 'Wensleydale', 'Brie', 'Velveeta'];
-prompts.add('Favorite_Color', rule(function (match) {
+prompts.add('Favorite_Color', prague_3.rule(function (match) {
     return match.reply(match.text === "blue" ? "That is correct!" : "That is incorrect");
 }));
 prompts.add('Favorite_Cheese', prompts.choice(cheeses, function (match) {
@@ -7957,21 +7949,20 @@ var intents = {
     askChoiceQuestion: /choice/i,
     all: /(.*)/i
 };
-var _b = prague_1.RegExpHelpers(), re = _b.re, matchRegExp = _b.matchRegExp;
 // LUIS
 var prague_5 = __webpack_require__(10);
 var luis = new prague_5.LuisModel('id', 'key', .5);
-var recipeRule = first(
+var recipeRule = prague_3.first(
 // Prompts
 prompts, 
 // For testing Prompts
-re(intents.askQuestion, function (match) {
+prague_1.re(intents.askQuestion, function (match) {
     prompts.setPrompt(match, 'Favorite_Color');
     match.reply("What is your favorite color?");
-}), re(intents.askYorNQuestion, function (match) {
+}), prague_1.re(intents.askYorNQuestion, function (match) {
     prompts.setPrompt(match, 'Like_Cheese');
     match.reply(prague_4.createConfirm("Do you like cheese?"));
-}), re(intents.askChoiceQuestion, function (match) {
+}), prague_1.re(intents.askChoiceQuestion, function (match) {
     prompts.setPrompt(match, 'Favorite_Cheese');
     match.reply(prague_4.createChoice("What is your favorite cheese?", cheeses));
 }), 
@@ -7985,13 +7976,13 @@ luis.best({
     }
 }), 
 // If there is no recipe, we have to pick one
-rule(filters.noRecipe, first(re(intents.chooseRecipe, chooseRecipe), re([intents.queryQuantity, intents.instructions.start, intents.instructions.restart], prague_3.reply("First please choose a recipe")), re(intents.all, chooseRecipe))), 
+prague_3.rule(filters.noRecipe, prague_3.first(prague_1.re(intents.chooseRecipe, chooseRecipe), prague_1.re([intents.queryQuantity, intents.instructions.start, intents.instructions.restart], prague_3.reply("First please choose a recipe")), prague_1.re(intents.all, chooseRecipe))), 
 // Now that we have a recipe, these can happen at any time
-re(intents.queryQuantity, queryQuantity), // TODO: conversions go here
+prague_1.re(intents.queryQuantity, queryQuantity), // TODO: conversions go here
 // If we haven't started listing instructions, wait for the user to tell us to start
-rule(filters.noInstructionsSent, re([intents.instructions.start, intents.instructions.next], function (match) { return sayInstruction(__assign({}, match, { instruction: 0 })); })), 
+prague_3.rule(filters.noInstructionsSent, prague_1.re([intents.instructions.start, intents.instructions.next], function (match) { return sayInstruction(__assign({}, match, { instruction: 0 })); })), 
 // We are listing instructions. Let the user navigate among them.
-first(re(intents.instructions.next, nextInstruction), re(intents.instructions.repeat, function (match) { return sayInstruction(__assign({}, match, { instruction: match.data.userInConversation.lastInstructionSent })); }), re(intents.instructions.previous, previousInstruction), re(intents.instructions.restart, function (match) { return sayInstruction(__assign({}, match, { instruction: 0 })); })), prague_3.reply("Honestly I have no idea what you're talking about."));
+prague_3.first(prague_1.re(intents.instructions.next, nextInstruction), prague_1.re(intents.instructions.repeat, function (match) { return sayInstruction(__assign({}, match, { instruction: match.data.userInConversation.lastInstructionSent })); }), prague_1.re(intents.instructions.previous, previousInstruction), prague_1.re(intents.instructions.restart, function (match) { return sayInstruction(__assign({}, match, { instruction: 0 })); })), prague_3.reply("Honestly I have no idea what you're talking about."));
 recipeBotChat.run({
     message: recipeRule
 });
@@ -11230,7 +11221,6 @@ var entityFields = function (entities) { return ({
 var LuisModel = (function () {
     function LuisModel(id, key, scoreThreshold) {
         if (scoreThreshold === void 0) { scoreThreshold = 0.5; }
-        var _this = this;
         this.scoreThreshold = scoreThreshold;
         this.cache = {};
         this.testData = {
@@ -11307,12 +11297,6 @@ var LuisModel = (function () {
                     }]
             }
         };
-        this.match = function (match) {
-            return _this.call(match.text)
-                .filter(function (luisResponse) { return luisResponse.topScoringIntent.score >= _this.scoreThreshold; })
-                .map(function (luisResponse) { return (__assign({}, match, { luisResponse: __assign({}, luisResponse, { intents: (luisResponse.intents || luisResponse.topScoringIntent && [luisResponse.topScoringIntent])
-                        .filter(function (luisIntent) { return luisIntent.score >= _this.scoreThreshold; }) }) })); });
-        };
         this.url =
             id === 'id' && key === 'key' ? 'testData' :
                 "https://westus.api.cognitive.microsoft.com/luis/v2.0/apps/" + id + "?subscription-key=" + key + "&q=";
@@ -11336,6 +11320,13 @@ var LuisModel = (function () {
             .map(function (ajaxResponse) { return ajaxResponse.response; })
             .do(function (luisResponse) { return _this.cache[utterance] = luisResponse; });
     };
+    LuisModel.prototype.match = function (match) {
+        var _this = this;
+        return this.call(match.text)
+            .filter(function (luisResponse) { return luisResponse.topScoringIntent.score >= _this.scoreThreshold; })
+            .map(function (luisResponse) { return (__assign({}, match, { luisResponse: __assign({}, luisResponse, { intents: (luisResponse.intents || luisResponse.topScoringIntent && [luisResponse.topScoringIntent])
+                    .filter(function (luisIntent) { return luisIntent.score >= _this.scoreThreshold; }) }) })); });
+    };
     // "classic" LUIS usage - for a given model, say what to do with each intent above a given threshold
     // IMPORTANT: the order of rules is not important - the rule matching the *highest-ranked intent* will be executed
     // Note that:
@@ -11354,7 +11345,8 @@ var LuisModel = (function () {
     //          luis.rule('intent2', handler2)
     //      ).prependMatcher(luis.model())
     LuisModel.prototype.best = function (luisRules) {
-        return new BestMatchingLuisRule(this.match, luisRules);
+        var _this = this;
+        return new BestMatchingLuisRule(function (match) { return _this.match(match); }, luisRules);
     };
     LuisModel.findEntity = function (entities, type) {
         return entities
@@ -11504,29 +11496,22 @@ var __assign = (this && this.__assign) || Object.assign || function(t) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var rxjs_1 = __webpack_require__(15);
 var Rules_1 = __webpack_require__(19);
-exports.RegExpHelpers = function () {
-    // helpers are first defined as local variables so that they can call each other if necessary
-    var matchRegExp = function (intents) {
-        return function (match) {
-            return rxjs_1.Observable.from(Rules_1.arrayize(intents))
-                .do(function (_) { return console.log("RegExp.match matching", match); })
-                .map(function (regexp) { return regexp.exec(match.text); })
-                .do(function (groups) { return console.log("RegExp.match result", groups); })
-                .filter(function (groups) { return groups && groups[0] === match.text; })
-                .take(1)
-                .do(function (groups) { return console.log("RegExp.match returning", groups); })
-                .map(function (groups) { return (__assign({}, match, { // remove "as any" when TypeScript fixes this bug,
-                groups: groups })); });
-        };
+exports.matchRegExp = function (intents) {
+    return function (match) {
+        return rxjs_1.Observable.from(Rules_1.arrayize(intents))
+            .do(function (_) { return console.log("RegExp.match matching", match); })
+            .map(function (regexp) { return regexp.exec(match.text); })
+            .do(function (groups) { return console.log("RegExp.match result", groups); })
+            .filter(function (groups) { return groups && groups[0] === match.text; })
+            .take(1)
+            .do(function (groups) { return console.log("RegExp.match returning", groups); })
+            .map(function (groups) { return (__assign({}, match, { // remove "as any" when TypeScript fixes this bug,
+            groups: groups })); });
     };
-    // Either call as re(intent, action) or re([intent, intent, ...], action)
-    var re = function (intents, handler) {
-        return new Rules_1.SimpleRule(matchRegExp(intents), handler);
-    };
-    return {
-        matchRegExp: matchRegExp,
-        re: re
-    };
+};
+// Either call as re(intent, action) or re([intent, intent, ...], action)
+exports.re = function (intents, handler) {
+    return new Rules_1.SimpleRule(exports.matchRegExp(intents), handler);
 };
 
 
