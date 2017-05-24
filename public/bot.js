@@ -7976,7 +7976,14 @@ re(intents.askQuestion, function (match) {
     match.reply(prague_4.createChoice("What is your favorite cheese?", cheeses));
 }), 
 // For testing LUIS
-luis.best(luis.rule('singASong', function (match) { return match.reply("Let's sing " + match.entityValues('song')[0]); }), luis.rule('findSomething', function (match) { return match.reply("Okay let's find a " + match.entityValues('what')[0] + " in " + match.entityValues('where')[0]); })), 
+luis.best({
+    'singASong': function (match) {
+        return match.reply("Let's sing " + match.entityValues('song')[0]);
+    },
+    'findSomething': function (match) {
+        return match.reply("Okay let's find a " + match.entityValues('what')[0] + " in " + match.entityValues('where')[0]);
+    }
+}), 
 // If there is no recipe, we have to pick one
 rule(filters.noRecipe, first(re(intents.chooseRecipe, chooseRecipe), re([intents.queryQuantity, intents.instructions.start, intents.instructions.restart], prague_3.reply("First please choose a recipe")), re(intents.all, chooseRecipe))), 
 // Now that we have a recipe, these can happen at any time
@@ -11329,12 +11336,6 @@ var LuisModel = (function () {
             .map(function (ajaxResponse) { return ajaxResponse.response; })
             .do(function (luisResponse) { return _this.cache[utterance] = luisResponse; });
     };
-    LuisModel.prototype.rule = function (intent, handler) {
-        return ({
-            intent: intent,
-            handler: handler
-        });
-    };
     // "classic" LUIS usage - for a given model, say what to do with each intent above a given threshold
     // IMPORTANT: the order of rules is not important - the rule matching the *highest-ranked intent* will be executed
     // Note that:
@@ -11352,13 +11353,8 @@ var LuisModel = (function () {
     //          luis.rule('intent1', handler1),
     //          luis.rule('intent2', handler2)
     //      ).prependMatcher(luis.model())
-    LuisModel.prototype.best = function () {
-        var _this = this;
-        var luisRules = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            luisRules[_i] = arguments[_i];
-        }
-        return new (BestMatchingLuisRule.bind.apply(BestMatchingLuisRule, [void 0, function (match) { return _this.match(match); }].concat(luisRules)))();
+    LuisModel.prototype.best = function (luisRules) {
+        return new BestMatchingLuisRule(this.match, luisRules);
     };
     LuisModel.findEntity = function (entities, type) {
         return entities
@@ -11373,11 +11369,7 @@ var LuisModel = (function () {
 exports.LuisModel = LuisModel;
 var BestMatchingLuisRule = (function (_super) {
     __extends(BestMatchingLuisRule, _super);
-    function BestMatchingLuisRule(matchModel) {
-        var luisRules = [];
-        for (var _i = 1; _i < arguments.length; _i++) {
-            luisRules[_i - 1] = arguments[_i];
-        }
+    function BestMatchingLuisRule(matchModel, luisRules) {
         var _this = _super.call(this) || this;
         _this.matchModel = matchModel;
         _this.luisRules = luisRules;
@@ -11389,12 +11381,11 @@ var BestMatchingLuisRule = (function (_super) {
             .flatMap(function (m) {
             return rxjs_1.Observable.from(m.luisResponse.intents)
                 .flatMap(function (luisIntent) {
-                return rxjs_1.Observable.of(_this.luisRules.find(function (luisRule) { return luisRule.intent === luisIntent.intent; }))
-                    .filter(function (luisRule) { return !!luisRule; })
-                    .map(function (luisRule) { return ({
-                    score: luisIntent.score,
-                    action: function () { return luisRule.handler(__assign({}, m, entityFields(m.luisResponse.entities))); }
-                }); });
+                return rxjs_1.Observable.of(_this.luisRules[luisIntent.intent])
+                    .filter(function (rule) { return !!rule; })
+                    .flatMap(function (rule) {
+                    return Rules_1.ruleize(rule).tryMatch(__assign({}, match, { score: luisIntent.score }, entityFields(m.luisResponse.entities)));
+                });
             }, 1)
                 .take(1);
         } // stop with first intent that appears in the rules

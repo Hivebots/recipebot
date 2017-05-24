@@ -277,10 +277,12 @@ const recipeRule = first(
 
     // For testing LUIS
 
-    luis.best(
-        luis.rule('singASong', match => match.reply(`Let's sing ${match.entityValues('song')[0]}`)),
-        luis.rule('findSomething', match => match.reply(`Okay let's find a ${match.entityValues('what')[0]} in ${match.entityValues('where')[0]}`))
-    ),
+    luis.best({
+        'singASong': match =>
+            match.reply(`Let's sing ${match.entityValues('song')[0]}`),
+        'findSomething': match =>
+            match.reply(`Okay let's find a ${match.entityValues('what')[0]} in ${match.entityValues('where')[0]}`)
+    }),
 
     // If there is no recipe, we have to pick one
     rule(filters.noRecipe, first(
